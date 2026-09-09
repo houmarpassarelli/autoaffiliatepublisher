@@ -87,3 +87,32 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 | Escopo de componentes | Completo, incluindo `Modal`, `DataTable` e `FormField`, que os CRUDs da Categoria 4 vão consumir |
 
 **Nota de validação:** o Firefox local não opera em modo headless enquanto a sessão do usuário está aberta. A conferência visual será tentada com um navegador headless instalado fora do repositório, preservando intocada a decisão em aberto entre Playwright e Puppeteer para o módulo de scraping.
+
+---
+
+## 2026-09-09 — 18:30 — Ações Resolutivas da Oferta: botões "Publicar" e "Descartar"
+
+**Contexto:** o solicitante pediu os dois botões do card do Dashboard Remoto — "Publicar" (Thin Client: envia o payload de comando, não processa o envio) e "Descartar" (status `DISCARDED`, alimentando o histórico anti-recaptura) — pedindo explicitamente a análise das ligações entre eles antes da execução.
+
+**Análise da ligação (base do desenho aprovado):** os dois botões não são funcionalidades independentes. São duas saídas do mesmo evento de domínio — a ação resolutiva de um operador sobre uma oferta em `OPEN`. Compartilham a porta de entrada (`status: OPEN`), a transição atômica do `ESPECS_TECNICAS.md`, Seção 6, a assinatura do operador (`operatorId` + `resolvedAt`) e o broadcast `OFFER_STATE_CHANGED`. Divergem apenas no estado de destino, na exigência de canais, na gravação do `DispatchLog` e no efeito a jusante. Consequência de arquitetura: **um serviço único de resolução de oferta com duas portas de entrada**, e não duas rotas com a trava de concorrência duplicada.
+
+**Dependência absorvida:** o item "Bloqueio Atômico de Oferta (`findOneAndUpdate` condicional)" — Demanda 2.3, Categoria 6 — não é vizinho das duas tasks, é o miolo delas. Entra nesta execução.
+
+**Escopo aprovado:**
+
+1. **Backend** — módulo `apps/api/src/modules/offers/`: mapeador de DTO, calculadora do instante de disparo (fórmula da Seção 7), serviço de resolução com a transição atômica e as rotas `GET /api/offers`, `POST /api/offers/:id/dispatch` e `POST /api/offers/:id/discard`.
+2. **Rotas de leitura de apoio**: `GET /api/channels` (canais ativos, para o seletor) e `GET /api/operators/available` (tela-portão, com nomes em uso marcados). Os CRUDs completos permanecem na Categoria 4.
+3. **Frontend** — fatia vertical completa no `@aap/dashboard-remote`: tela-portão de operador consumindo o `OPERATOR_CLAIM` já pronto no servidor, cliente WebSocket com heartbeat, carga das três abas, card de oferta, seletor multicanal e os dois botões, reagindo ao broadcast.
+
+**Decisões do solicitante nesta sessão:**
+
+| Decisão | Escolha | Efeito |
+| :--- | :--- | :--- |
+| Limite da entrega no frontend | Fatia vertical completa até o clique real | Os dois itens ficam verificáveis de ponta a ponta; itens vizinhos da Categoria 5 são encerrados junto e marcados como tal |
+| Fila BullMQ (Demanda 2.1) | Fora desta sessão | `scheduledFor` é calculado a partir da última oferta em `SCHEDULED` no banco, com o Δ de `DISPATCH_INTERVAL_MS`. O enfileiramento fica como ponto de extensão explícito e documentado |
+
+**Delimitação honesta do escopo:** os drivers de canal (Categoria 6) não existem — nenhuma publicação real acontece nesta entrega. O que é entregue é o **comando, a trava de concorrência, a auditoria e a propagação de estado**. Uma oferta que chega a `COMPLETED` significa "ação resolutiva registrada", não "mensagem entregue no canal"; a confirmação de entrega é o `OFFER_PUBLISHED`, que nasce no worker da fila.
+
+**Desvio deliberado da Seção 5 do `ESPECS_TECNICAS.md`:** a sequência documentada é broadcast (passo 3) antes da gravação do `DispatchLog` (passo 4). A implementação inverte os dois. O broadcast é uma escrita em memória que não falha de forma relevante; a gravação do log, sim. Inverter reduz a janela em que uma oferta fica resolvida sem auditoria — e a auditoria é o produto do disparo.
+
+**Divergência estrutural registrada:** o `ARQUITETURA.md`, Seção 8, enumera seis módulos em `apps/api/src/modules`. Esta execução acrescenta `offers/` e `channels/`. A atualização daquele documento pertence ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`) e não foi realizada nesta sessão de execução.

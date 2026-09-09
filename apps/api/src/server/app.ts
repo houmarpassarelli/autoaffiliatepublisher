@@ -8,6 +8,9 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { env, isProduction } from '../config/env.js';
+import { channelRoutes } from '../modules/channels/index.js';
+import { offerRoutes } from '../modules/offers/index.js';
+import { operatorRoutes } from '../modules/operators/index.js';
 import { registerWebsocketModule } from '../modules/websocket/index.js';
 import { healthRoutes } from './routes/healthRoutes.js';
 
@@ -56,6 +59,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(healthRoutes);
+
+  // Rotas de domínio consumidas pelo Dashboard Remoto: carga das abas, comandos
+  // resolutivos do operador e as leituras de apoio da tela-portão e do seletor.
+  await app.register(offerRoutes);
+  await app.register(channelRoutes);
+  await app.register(operatorRoutes);
 
   // Camada de tempo real: rota /ws, broadcast de estado global e presença ativa.
   await registerWebsocketModule(app);

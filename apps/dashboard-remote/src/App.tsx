@@ -1,88 +1,81 @@
 // apps/dashboard-remote/src/App.tsx
-import { useState } from 'react';
-import { OfferStatus } from '@aap/shared';
-import {
-  AppShell,
-  Badge,
-  EmptyState,
-  PageHeader,
-  Tabs,
-  useBackendHealth,
-  type TabItem,
-} from '@aap/ui';
+import { useEffect, useState } from 'react';
+import { ServerReplyType } from '@aap/shared';
+import { AppShell, Badge, Button } from '@aap/ui';
+import { OfferBoard } from './components/OfferBoard.js';
+import { OperatorGate, type SelectedOperator } from './components/OperatorGate.js';
+import { useRealtime } from './realtime/useRealtime.js';
+import type { ConnectionStatus } from './realtime/realtimeClient.js';
 
-/**
- * As três abas espelham a máquina de estados da oferta
- * (FLUXO_OPERACIONAL.md, Seção 3). O estado DISCARDED não tem aba: a oferta
- * descartada some da fila e passa a alimentar o histórico anti-recaptura.
- */
-type OfferTabId = OfferStatus.OPEN | OfferStatus.SCHEDULED | OfferStatus.COMPLETED;
+/** Estado da conexão de tempo real, exibido na barra superior. */
+function ConnectionBadge({ status }: { status: ConnectionStatus }): React.JSX.Element {
+  if (status === 'open') {
+    return <Badge tone="success">Conectado</Badge>;
+  }
 
-const OFFER_TABS: TabItem<OfferTabId>[] = [
-  { id: OfferStatus.OPEN, label: 'Abertas', count: 0 },
-  { id: OfferStatus.SCHEDULED, label: 'Agendadas', count: 0 },
-  { id: OfferStatus.COMPLETED, label: 'Concluídas', count: 0 },
-];
-
-/** Texto de ausência de cada aba: o motivo de estar vazia muda conforme o estado. */
-const EMPTY_BY_TAB: Record<OfferTabId, { title: string; description: string }> = {
-  [OfferStatus.OPEN]: {
-    title: 'Nenhuma oferta aguardando decisão',
-    description:
-      'Ofertas capturadas pelas fontes de coleta aparecem aqui no topo, em tempo real, sem recarregar a página.',
-  },
-  [OfferStatus.SCHEDULED]: {
-    title: 'Nenhuma oferta na fila de disparo',
-    description:
-      'Ofertas aprovadas com a fila ocupada aguardam aqui o intervalo anti-spam, exibindo a contagem regressiva.',
-  },
-  [OfferStatus.COMPLETED]: {
-    title: 'Nenhuma oferta publicada ainda',
-    description: 'O histórico de disparos confirmados aparece nesta aba.',
-  },
-};
-
-/** Indicador de conexão com a máquina administrativa, exibido na barra superior. */
-function ConnectionBadge(): React.JSX.Element {
-  const { state } = useBackendHealth();
-
-  if (state.phase === 'loading') {
+  if (status === 'connecting') {
     return <Badge tone="neutral">Conectando…</Badge>;
   }
 
-  if (state.phase === 'offline') {
-    return <Badge tone="danger">Sem conexão</Badge>;
-  }
-
-  return (
-    <Badge tone={state.health.status === 'ok' ? 'success' : 'warning'}>
-      {state.health.status === 'ok' ? 'Conectado' : 'Conexão degradada'}
-    </Badge>
-  );
+  return <Badge tone="danger">Sem conexão</Badge>;
 }
 
-/** Dashboard Remoto: curadoria e disparo das ofertas coletadas. */
+/**
+ * Dashboard Remoto: curadoria e disparo das ofertas coletadas.
+ *
+ * A tela é Thin Client de ponta a ponta — ela comanda e exibe, e nunca publica.
+ * O socket é aberto uma única vez, antes mesmo da tela-portão, porque a própria
+ * seleção de operador precisa reagir a quem entra e sai.
+ */
 export function App(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<OfferTabId>(OfferStatus.OPEN);
-  const empty = EMPTY_BY_TAB[activeTab];
+  const { client, status } = useRealtime();
+  const [operator, setOperator] = useState<SelectedOperator | null>(null);
+
+  /**
+   * Perda de identidade na reconexão.
+   *
+   * A presença vive no socket: se a conexão cair e, ao voltar, o nome já tiver
+   * sido tomado por outro dispositivo, o operador precisa voltar à tela-portão.
+   * Continuar operando assinaria ações com uma identidade que o servidor não
+   * reconhece mais.
+   */
+  useEffect(
+    () =>
+      client.onReply((reply) => {
+        if (reply.reply === ServerReplyType.OPERATOR_CLAIM_REJECTED) {
+          setOperator(null);
+        }
+      }),
+    [client],
+  );
+
+  /** Sai da identidade e libera o nome para outro dispositivo. */
+  function handleLeave(): void {
+    client.releaseClaim();
+    setOperator(null);
+  }
+
+  const toolbar = (
+    <div className="d-flex align-items-center gap-2">
+      <ConnectionBadge status={status} />
+      {operator ? (
+        <>
+          <Badge tone="info">{operator.name}</Badge>
+          <Button variant="ghost" onClick={handleLeave}>
+            Sair
+          </Button>
+        </>
+      ) : null}
+    </div>
+  );
 
   return (
-    <AppShell label="Curadoria" tone="remote" toolbar={<ConnectionBadge />}>
-      <PageHeader
-        title="Fila de ofertas"
-        subtitle="Revise a oferta, escolha os canais e publique. Cada decisão remove o item da fila de todos os operadores."
-      />
-
-      <Tabs
-        items={OFFER_TABS}
-        activeId={activeTab}
-        onChange={setActiveTab}
-        label="Ciclo de vida da oferta"
-      >
-        <div className="card-body">
-          <EmptyState title={empty.title} description={empty.description} />
-        </div>
-      </Tabs>
+    <AppShell label="Curadoria" tone="remote" toolbar={toolbar}>
+      {operator ? (
+        <OfferBoard client={client} operator={operator} status={status} />
+      ) : (
+        <OperatorGate client={client} onEnter={setOperator} />
+      )}
     </AppShell>
   );
 }

@@ -1,7 +1,7 @@
 // packages/shared/src/contracts/dispatchCommand.ts
 import { z } from 'zod';
-import { DispatchActionType } from '../enums/index.js';
-import { objectIdSchema } from '../schemas/commonSchemas.js';
+import { DispatchActionType, OfferStatus } from '../enums/index.js';
+import { isoDateSchema, objectIdSchema } from '../schemas/commonSchemas.js';
 
 /**
  * Comando enviado pelo Dashboard Remoto ao clicar em "Publicar" ou em
@@ -26,3 +26,34 @@ export const discardCommandSchema = z.object({
 });
 
 export type DiscardCommand = z.infer<typeof discardCommandSchema>;
+
+/**
+ * Identificação da oferta alvo na URL das rotas de ação resolutiva.
+ * O `offerId` do payload documentado na Seção 5 do ESPECS_TECNICAS.md viaja
+ * como parâmetro de rota: ele identifica o recurso, não o comando.
+ */
+export const offerIdParamsSchema = z.object({
+  id: objectIdSchema,
+});
+
+export type OfferIdParams = z.infer<typeof offerIdParamsSchema>;
+
+/**
+ * Retorno das duas ações resolutivas — "Publicar"/"Copiar" e "Descartar".
+ *
+ * O cliente não precisa desta resposta para atualizar a própria tela: o
+ * broadcast OFFER_STATE_CHANGED já faz isso em todas as telas conectadas,
+ * inclusive na dele. Ela existe para que quem disparou saiba o desfecho exato
+ * da sua ação — em especial se a oferta foi disparada de imediato ou entrou na
+ * fila com horário marcado — sem depender da ordem de chegada do broadcast.
+ */
+export const offerResolutionResponseSchema = z.object({
+  offerId: objectIdSchema,
+  status: z.enum(OfferStatus), // COMPLETED, SCHEDULED ou DISCARDED
+  operatorName: z.string(), // Assinatura registrada na ação
+  selectedChannels: z.array(z.string()), // Vazio no descarte
+  scheduledFor: isoDateSchema.nullable(), // Instante de disparo reservado na fila
+  resolvedAt: isoDateSchema, // Momento da ação resolutiva
+});
+
+export type OfferResolutionResponse = z.infer<typeof offerResolutionResponseSchema>;

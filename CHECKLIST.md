@@ -2,7 +2,7 @@
 
 Este documento compila o status completo de desenvolvimento do projeto **Auto Affiliate Publisher**, categorizado por **Fluxos de Execução**. Cada item possui sua própria caixa de seleção (`- [x]` Implementado no Código, `- [ ]` Pendente, `- [X]` Removido/Substituído) e aponta para o documento de especificação (`.md`) correspondente.
 
-**Estado atual:** monorepo estruturado (Sprint 0, 08/09/2026), camada de tempo real no ar (Demanda 2.2, 09/09/2026) e kit de interface compartilhado (`@aap/ui`, 09/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, e expõe a rota `GET /ws` com broadcast e presença ativa; os dois dashboards já têm casca navegável sobre o kit. Os fluxos de ingestão, IA, publicação e os CRUDs seguem pendentes.
+**Estado atual:** monorepo estruturado (Sprint 0, 08/09/2026), camada de tempo real no ar (Demanda 2.2, 09/09/2026), kit de interface compartilhado (`@aap/ui`, 09/09/2026) e o **ciclo de curadoria fechado de ponta a ponta** (09/09/2026). O Dashboard Remoto é operável: tela-portão com presença ativa, as três abas carregando do servidor, card com seletor multicanal e os botões "Publicar" e "Descartar", com o bloqueio atômico anti-concorrência e a auditoria gravada a cada publicação. Seguem pendentes a ingestão, a IA, a fila BullMQ, os drivers de canal — **nenhuma publicação real acontece ainda** — e os CRUDs do painel administrativo.
 
 ## Sumário
 
@@ -85,7 +85,7 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026)*
 - [x] **Controle de Presença Ativa e Validação das Mensagens do Cliente** (*`OPERATOR_CLAIM` com resposta tipada de aceite ou recusa, `HEARTBEAT`, e validação em tempo de execução de tudo que chega pelo socket*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#32-mensagens-enviadas-pelo-cliente))*
-- [x] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}` e `{operatorId,resolvedAt:-1}` aplicados por `ensureIndexes()` no bootstrap e conferidos no banco*)
+- [x] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}` e `{operatorId,resolvedAt:-1}` aplicados por `ensureIndexes()` no bootstrap e conferidos no banco; acrescentado `{scheduledFor:-1}` em 09/09/2026, que sustenta a consulta do horizonte da fila de disparo*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ### Pendentes
@@ -108,9 +108,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Pendentes
 - [ ] **CRUD de Fontes de Coleta** (*nome, tipo, URL, chaves de API, intervalo de varredura e prompt customizado da IA*) — **Demanda 1.2 e 3.1, Sprints 1 e 3**
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#43-módulo-c--dashboard-1-configuração-e-ingestão-local--admin))*
-- [ ] **CRUD de Canais de Destino** (*cadastro dinâmico com credenciais, modo de execução e status; reflete no dashboard remoto via `CHANNELS_UPDATED`*)
+- [ ] **CRUD de Canais de Destino** (*cadastro dinâmico com credenciais, modo de execução e status; reflete no dashboard remoto via `CHANNELS_UPDATED`. A leitura `GET /api/channels` já existe e alimenta o seletor multicanal; faltam a escrita, as credenciais e o broadcast*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#6-seletor-multicanal-por-oferta))*
-- [ ] **CRUD de Operadores** (*nome obrigatório, e-mail opcional, sem senha ou token*) — **Demanda 1.2, Sprint 1**
+- [ ] **CRUD de Operadores** (*nome obrigatório, e-mail opcional, sem senha ou token. A leitura `GET /api/operators/available` já existe e alimenta a tela-portão; falta a escrita*) — **Demanda 1.2, Sprint 1**
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#71-cadastro-dashboard-administrativo))*
 - [ ] **Painel de Auditoria de Disparos** (*tabela com filtros por data, operador, loja de origem e canal — colunas Data/Hora, Operador, Produto, Loja, Preço, Link, Status*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#8-rastreamento-de-ações-e-auditoria))*
@@ -123,31 +123,30 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 5. 📱 Fluxo do Dashboard Remoto (Curadoria Colaborativa)
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Tela-Portão de Seleção de Operador** (*lista de nomes cadastrados por `GET /api/operators/available`, com "Em uso" lido do registro de conexões vivas e mantido em tempo real pelos eventos de presença*) — **Demanda 3.2, Sprint 3**
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#72-tela-portão-de-seleção-dashboard-remoto) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — ações resolutivas)*
+- [x] **Controle de Presença Ativa via WebSocket** (*consumo completo no dashboard remoto: `OPERATOR_CLAIM` com tratamento do aceite e das duas recusas, `HEARTBEAT` desde a abertura do socket, e nova reivindicação a cada reconexão — conferido com o backend derrubado e restabelecido*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#73-controle-de-presença-ativa))*
+- [x] **Estrutura de 3 Abas** (*Abertas, Agendadas e Concluídas, com contadores e carga por `GET /api/offers?status=`*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#3-sistema-de-abas-do-dashboard-remoto))*
+- [x] **Card de Oferta** (*miniatura com espaço reservado quando a imagem não carrega, título, preço de/por, desconto percentual, selo de menor preço já registrado, loja de origem e copy da IA*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#31-aba-abertas-novas--pendentes))*
+- [x] **Ordenação Decrescente com Inserção no Topo** (*ordenação garantida no servidor e reaplicada a cada inserção no cliente; o consumo de `OFFER_CREATED` está implementado e o **emissor** nasce no worker de ingestão, ainda pendente*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#43-reatividade-sem-recarregamento))*
+- [x] **Seletor Multicanal por Card** (*checkboxes dos canais ativos mais a opção mestre "Marcar/Desmarcar Todos", todos pré-marcados; o card guarda o que foi desmarcado, de modo que canal novo chega marcado sem apagar as exclusões do operador*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#6-seletor-multicanal-por-oferta))*
+- [x] **Botão "Publicar"** (*envia o payload de comando a `POST /api/offers/:id/dispatch` — Thin Client, sem processar envio localmente*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#5-payload-de-comando-de-disparo-thin-client--servidor) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — ações resolutivas)*
+- [x] **Botão "Descartar"** (*status `DISCARDED` por `POST /api/offers/:id/discard`, alimentando o histórico anti-recaptura; sem `DispatchLog`, porque nada foi publicado*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#21-estados))*
+- [x] **Sincronização Reativa Completa via WebSocket** (*cards migram entre abas em todas as telas conectadas, sem F5 — conferido com dois navegadores independentes, incluindo clique simultâneo no mesmo card; a volta de uma queda de conexão ressincroniza a fila*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#4-estado-global-único-e-controle-de-concorrência))*
 
 ### Pendentes
-- [ ] **Tela-Portão de Seleção de Operador** (*lista de nomes cadastrados; nomes em uso ficam desabilitados com a marcação "Em uso"*) — **Demanda 3.2, Sprint 3**
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#72-tela-portão-de-seleção-dashboard-remoto))*
-- [ ] **Controle de Presença Ativa via WebSocket** (*`OPERATOR_CLAIM`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED` — libera o nome na desconexão. **Lado servidor concluído em 09/09/2026**; resta o consumo no dashboard remoto, incluindo o envio de `HEARTBEAT` desde a abertura do socket*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#73-controle-de-presença-ativa))*
-- [ ] **Estrutura de 3 Abas** (*Abertas, Agendadas e Concluídas, espelhando a máquina de estados da oferta*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#3-sistema-de-abas-do-dashboard-remoto))*
-- [ ] **Card de Oferta** (*imagem, título, preço de/por, desconto percentual, loja de origem e copy da IA*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#31-aba-abertas-novas--pendentes))*
-- [ ] **Ordenação Decrescente com Inserção no Topo** (*ofertas novas entram no topo da aba Abertas em tempo real, sem recarregar a página*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#43-reatividade-sem-recarregamento))*
-- [ ] **Seletor Multicanal por Card** (*checkboxes dos canais ativos + opção mestre "Marcar/Desmarcar Todos", todos pré-marcados por padrão*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#6-seletor-multicanal-por-oferta))*
-- [ ] **Botão "Publicar"** (*envia o payload de comando ao servidor — Thin Client, sem processar envio localmente*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#5-payload-de-comando-de-disparo-thin-client--servidor))*
-- [ ] **Botão "Copiar para Área de Transferência"** (*copia a mensagem formatada e sinaliza conclusão — equivalência total com "Publicar"*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#5-equivalência-de-ação--copiar-vale-como-publicar))*
-- [ ] **Botão "Descartar"** (*status `DISCARDED`, alimentando o histórico anti-recaptura*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#21-estados))*
-- [ ] **Contagem Regressiva na Aba Agendadas** (*horário previsto de envio, canais selecionados e countdown por item*)
+- [ ] **Contagem Regressiva na Aba Agendadas** (*o horário previsto de envio, os canais selecionados e a assinatura do operador já são exibidos; falta o countdown por item*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#32-aba-agendadas-na-fila-de-disparo))*
-- [ ] **Sincronização Reativa Completa via WebSocket** (*cards migram entre abas em todas as telas conectadas, sem F5*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#4-estado-global-único-e-controle-de-concorrência))*
+- [ ] **Botão "Copiar para Área de Transferência"** (*copia a mensagem formatada e sinaliza conclusão — equivalência total com "Publicar". A rota já aceita `COPIED_CLIPBOARD` e o caminho está verificado ponta a ponta: resta apenas a interface*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#5-equivalência-de-ação--copiar-vale-como-publicar))*
 - [ ] **Botão "Regenerar Copy"** (*reenvia o payload ao LLM quando o texto gerado não ficou atrativo*)
   *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 4)*
 
@@ -157,12 +156,13 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 6. 📤 Fluxo de Publicação Multicanal e Fila de Disparo
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Bloqueio Atômico de Oferta (`findOneAndUpdate` condicional)** (*núcleo compartilhado pelas duas ações resolutivas: só a primeira requisição que encontrar a oferta em `OPEN` vence, e as concorrentes recebem 409 Conflict — conferido com requisições simultâneas e com dois operadores clicando no mesmo card*) — **Demanda 2.3, Sprint 2**
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#6-bloqueio-atômico-de-oferta-anti-concorrência) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — ações resolutivas)*
+- [x] **Registro de `DispatchLog` a Cada Ação Resolutiva** (*assinatura desnormalizada do operador, SKU, canais e preço congelado, gravados a cada publicação; o descarte não gera log, por não ser publicação. O `deliveryStatus` nasce vazio: o resultado por canal pertence ao worker de disparo*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
 
 ### Pendentes
-- [ ] **Bloqueio Atômico de Oferta (`findOneAndUpdate` condicional)** (*só a primeira requisição que encontrar a oferta em `OPEN` vence; concorrentes recebem 409 Conflict*) — **Demanda 2.3, Sprint 2**
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#6-bloqueio-atômico-de-oferta-anti-concorrência))*
-- [ ] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job*) — **Demanda 2.1, Sprint 2**
+- [ ] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job. O **cálculo** do instante de disparo e a decisão `SCHEDULED` vs `COMPLETED` já estão implementados em `dispatchScheduler.ts`, lendo o horizonte da coleção de ofertas; faltam a fila e o worker, que assumem `findDispatchHorizon()` e movem a oferta de `SCHEDULED` para `COMPLETED`*) — **Demanda 2.1, Sprint 2**
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [ ] **Driver Telegram** (*Bot API — automação total, disparo imediato*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#4-apis-de-publicação-por-canal))*
@@ -176,8 +176,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
 - [ ] **Driver WhatsApp Canais (modo assistido)** (*mensagem formatada pronta para colar — sem API oficial, sem automação*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
-- [ ] **Registro de `DispatchLog` a Cada Ação Resolutiva** (*assinatura do operador, SKU, canais, preço congelado e resultado por canal*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
 - [ ] **Broadcast `OFFER_PUBLISHED` na Conclusão do Job** (*move o card de Agendadas para Concluídas em todas as telas*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
 
@@ -187,10 +185,17 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 7. 🐛 Fluxo de Bugs
 
 ### Abertos
-*(nenhum item — projeto ainda sem código)*
+*(nenhum item)*
 
 ### Corrigidos
-*(nenhum item — projeto ainda sem código)*
+- [x] **`isoDateSchema` quebrava toda rota que devolvesse data** (*o schema era uma união com `.transform()`; o Fastify serializa a resposta pelo mesmo schema, no sentido inverso, e `transform` é unidirecional — `GET /api/offers` respondia 500 com `ZodEncodeError`. Passou a ser `z.iso.datetime({ offset: true })`, com a conversão movida para os mapeadores. Defeito latente desde o Sprint 0: nenhuma rota anterior devolvia data*)
+  *(Corrigido em 09/09/2026 — ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — ações resolutivas)*
+- [x] **A política anti-spam não segurava dois cliques seguidos** (*com a fila vazia, a segunda oferta disparava 214 ms depois da primeira. O trecho de código do `ESPECS_TECNICAS.md`, Seção 7, devolve "agora" sempre que o último agendamento já passou — o que só preserva o anti-spam enquanto o disparo imediato ainda estiver pendente numa fila. Prevaleceu a regra do `ARQUITETURA.md`, Seção 7: nenhum disparo acontece a menos de Δ do anterior*)
+  *(Corrigido em 09/09/2026 — ver a divergência registrada na Categoria 8)*
+- [x] **Imagem de oferta que não carrega exibia ícone quebrado no card** (*a miniatura vem da loja de origem e pode falhar por produto removido, host fora do ar ou hotlink bloqueado. Passou a exibir espaço reservado com a altura preservada*)
+  *(Corrigido em 09/09/2026)*
+- [x] **O quadro ficava defasado após uma queda de conexão** (*com o socket fora, os eventos daquele intervalo não chegam e o estado global deixa de ser único. A volta de uma queda passou a ressincronizar fila e canais*)
+  *(Corrigido em 09/09/2026)*
 
 ---
 
@@ -200,6 +205,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Pendentes
 - [ ] **Definir o valor operacional do intervalo do delay progressivo** (*referência inicial de 3 min; levantamento de mercado sugere 30 a 60 min para preservar a audiência*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
+- [ ] **Definir se o descarte deve pedir confirmação** (*`DISCARDED` é terminal e bloqueia o produto permanentemente na deduplicação da ingestão; hoje um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade de 5 a 10 segundos por decisão*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
 - [ ] **Definir a política de divergência de preço na reverificação pré-disparo** (*abortar e devolver a `OPEN`, ou disparar com o preço atualizado*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#82-reverificação-antes-do-disparo))*
 - [ ] **Definir o método de criptografia das credenciais em banco**
@@ -218,6 +225,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 
 ### Concluídas
+- [x] **Divergência entre a fórmula do delay e a regra do delay, resolvida a favor da regra** (*o trecho de código do `ESPECS_TECNICAS.md`, Seção 7, contradiz o `ARQUITETURA.md`, Seção 7, e o `FLUXO_OPERACIONAL.md`, Seção 9.1, quando o último disparo já foi processado. Adotada a regra: **nenhum disparo acontece a menos de Δ do anterior**, com o horizonte "vencido" significando "a janela de Δ já se esgotou". Decorre daí que a oferta de disparo imediato também grava `scheduledFor`*)
+  *(Decidido em 09/09/2026 — ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md). A atualização do trecho no `ESPECS_TECNICAS.md` pertence ao Fluxo 2)*
 - [x] **Reconciliação de presença órfã implementada** (*duas salvaguardas: varredor de heartbeat com janela em `WEBSOCKET_HEARTBEAT_TIMEOUT_MS` para queda de rede sem `close` limpo, e reset de presenças no bootstrap para morte abrupta do processo*)
   *(Implementado em 09/09/2026 — ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md))*
 - [x] **Escolha da biblioteca de WebSocket: `@fastify/websocket`** (*plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio — suficiente para os 6 eventos de broadcast e o controle de presença*)

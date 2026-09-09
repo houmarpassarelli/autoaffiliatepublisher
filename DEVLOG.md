@@ -203,3 +203,126 @@ Este bug só apareceu porque a conferência foi visual: `typecheck`, `lint` e `b
 | Kit completo | `DataTable`, campos de formulário com erro de validação, botões nos quatro estados, e os três estados de retorno conferidos em imagem |
 
 A conferência do kit usou uma página de prévia temporária dentro do dashboard administrativo, **removida ao final** — confirmado que restaram apenas `App.tsx` e `main.tsx` no diretório. Nenhum commit, branch ou push foi realizado.
+
+---
+
+## 2026-09-09 — Ações Resolutivas da Oferta: botões "Publicar" e "Descartar"
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 09/09/2026, 18:30.
+
+### 1. A ligação entre os dois itens, e o que ela determinou no código
+
+Os dois botões não são funcionalidades independentes: são duas saídas do mesmo evento de domínio — a ação resolutiva de um operador sobre uma oferta em `OPEN`. Compartilham a porta de entrada, a transição atômica, a assinatura do operador e o broadcast. Divergem no estado de destino, na exigência de canais, na gravação do `DispatchLog` e no efeito a jusante.
+
+Isso decidiu o desenho: **um serviço de resolução com duas portas de entrada** (`offerResolutionService.ts`), e não duas rotas com a trava de concorrência duplicada. O trecho onde duplicar sairia mais caro é exatamente o `findOneAndUpdate` condicional.
+
+A dependência que os dois arrastam — "Bloqueio Atômico de Oferta", Demanda 2.3 — não é vizinha das tasks, é o miolo delas, e foi implementada aqui.
+
+### 2. Backend
+
+| Arquivo | Conteúdo |
+| :--- | :--- |
+| `server/errors.ts` | `BadRequestError`, `NotFoundError` e `ConflictError` sobre `statusCode`, aproveitando o tratador central já existente |
+| `modules/offers/offerMapper.ts` | Documento → `OfferDto`, com normalização do `aiCopy` (Map ou objeto) e o menor preço já registrado |
+| `modules/offers/offerQueryService.ts` | Carga das abas, resolvendo lojas e operadores em bloco — uma consulta por lote, não por card |
+| `modules/offers/dispatchScheduler.ts` | Fórmula do instante de disparo e leitura do horizonte da fila |
+| `modules/offers/offerResolutionService.ts` | Transição atômica, auditoria e broadcast — o núcleo das duas ações |
+| `modules/offers/offerRoutes.ts` | `GET /api/offers`, `POST /api/offers/:id/dispatch`, `POST /api/offers/:id/discard` |
+| `modules/channels/` | `GET /api/channels` e o mapeador de DTO, para o seletor multicanal |
+| `modules/operators/operatorRoutes.ts` | `GET /api/operators/available`, com "Em uso" lido do registro de conexões vivas |
+
+Índice acrescentado em `offers`: `{ scheduledFor: -1 }`, que sustenta a consulta do horizonte da fila.
+
+**Ordem das operações, com um desvio deliberado.** O `ESPECS_TECNICAS.md`, Seção 5, lista broadcast (passo 3) antes da gravação do `DispatchLog` (passo 4). A implementação inverte: o broadcast é escrita em memória e não falha de forma relevante; a gravação do log, sim. Inverter encolhe a janela em que uma oferta fica resolvida sem auditoria — e a auditoria é o produto do disparo.
+
+**Validação antes da transição.** Operador inativo e canal inexistente recusam o comando *sem* consumir a oferta. Um comando malformado não pode tirar a oferta da fila de todos os outros operadores.
+
+**O descarte não grava `DispatchLog`.** Nada foi publicado, e `dispatch_logs` é insumo direto do comissionamento futuro; registrar descarte ali contaminaria o rateio.
+
+### 3. Frontend — fatia vertical completa no Dashboard Remoto
+
+| Diretório | Conteúdo |
+| :--- | :--- |
+| `api/` | Cliente HTTP com resposta validada pelo schema compartilhado e `ApiError` preservando o código — o 409 precisa ser distinguido de falha de rede |
+| `realtime/` | `RealtimeClient` (heartbeat desde a abertura, reconexão e nova reivindicação) e os hooks de inscrição |
+| `state/` | Quadro das três abas, canais ativos e ressincronização na volta da conexão |
+| `components/` | `OperatorGate`, `ChannelSelector`, `OfferCard` e `OfferBoard` |
+
+O `App.tsx` deixou de ser casca: abre o socket antes da tela-portão (a própria seleção precisa reagir a quem entra e sai), leva à curadoria após o aceite e devolve à seleção se a identidade for perdida numa reconexão.
+
+**O seletor guarda o que foi desmarcado, não o que está marcado.** Assim "todas as caixas vêm pré-marcadas" continua valendo quando a lista de canais muda embaixo do card: um canal criado no painel administrativo chega já marcado, sem apagar as exclusões que o operador já tinha feito.
+
+### 4. Três defeitos encontrados na execução, todos corrigidos
+
+**a) O contrato de datas quebrava toda rota que devolvesse data.** `isoDateSchema` era uma união com `.transform()`. O Fastify serializa a resposta pelo mesmo schema, no sentido inverso, e `transform` é unidirecional: a primeira chamada a `GET /api/offers` respondeu 500 com `ZodEncodeError`. O schema passou a ser `z.iso.datetime({ offset: true })` e a conversão foi para os mapeadores, onde o compilador cobra que ela aconteça. Nenhum tipo mudou — a saída do `transform` já era `string`.
+
+Este defeito estava latente desde o Sprint 0 e só não apareceu antes porque nenhuma rota existente devolvia data.
+
+**b) A política anti-spam não segurava dois cliques seguidos.** A verificação reproduziu: segunda oferta disparada 214 ms depois da primeira. A causa é uma divergência entre documentos. O trecho de código do `ESPECS_TECNICAS.md`, Seção 7, devolve "agora" sempre que o último agendamento já passou — o que só preserva o anti-spam enquanto o disparo imediato ainda estiver pendente numa fila. No instante em que ele é processado, a rajada volta.
+
+Prevaleceu a regra do `ARQUITETURA.md`, Seção 7 ("item 1 imediato, item 2 em +Δ, item 3 em +2Δ") e do `FLUXO_OPERACIONAL.md`, Seção 9.1: **nenhum disparo acontece a menos de Δ do anterior**. O horizonte "vencido" passou a significar "a janela de Δ já se esgotou", e não "o instante apenas passou". Divergência documentada no comentário da função, no README do módulo e aqui.
+
+Decorre daí que **a oferta de disparo imediato também grava `scheduledFor`**: sem registrar o instante reservado, dois cliques com a fila vazia produziriam dois disparos instantâneos.
+
+**c) O quadro ficava defasado após uma queda de conexão.** Enquanto o socket está fora, o broadcast não chega — ofertas novas e decisões de outros operadores acontecem sem que a tela saiba, e o estado global deixa de ser único. Acrescentado `useResyncOnReconnect`: a volta de uma queda recarrega fila e canais. A primeira conexão não dispara recarga, porque a carga inicial já aconteceu por HTTP.
+
+### 5. Dois ajustes vindos da conferência visual
+
+- **Imagem que não carrega virava ícone quebrado** bem no ponto onde o operador olha primeiro. Passou a exibir espaço reservado com a altura preservada, para que a lista não mude de altura entre cards.
+- **A aba Agendadas exibia a chave interna do canal** (`verify-telegram`) em vez do rótulo. A chave é identificador de payload e de auditoria, não o nome pelo qual o operador conhece o destino. Canal removido do cadastro depois do disparo cai de volta na chave — é o único nome que resta dele.
+
+### 6. Validações executadas
+
+`typecheck`, `lint` e `build` limpos nos cinco workspaces. Backend de pé sobre MongoDB e Redis, com dados semeados e removidos ao final.
+
+**Backend, 29 verificações:**
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Carga das abas, ordenação decrescente e DTO sem `originalUrl` nem `dedupeHash` | Conferido |
+| Publicar com a fila vazia | `OPEN -> COMPLETED`, disparo imediato |
+| Publicar com a fila ocupada | `OPEN -> SCHEDULED`, Δ de exatamente 180.000 ms |
+| Terceiro e quarto cliques | Escalonados em 22:48 → 22:51 → 22:54 → 22:57 |
+| Duas requisições simultâneas na mesma oferta | Uma 200, outra 409 com mensagem explicativa |
+| Canal inexistente | 400, e a oferta **permanece** em `OPEN` |
+| Descartar | `DISCARDED`, sem `scheduledFor`, sem canais, com assinatura |
+| Descartar oferta já resolvida | 409 |
+| Auditoria | 4 logs para 4 publicações, **nenhum** para o descarte; preço, SKU e assinatura congelados; `deliveryStatus` vazio |
+| `COPIED_CLIPBOARD` | Registrado com o mesmo peso, mudando só o `actionType` |
+| `OFFER_STATE_CHANGED` | Recebido por outro operador conectado, nas duas ações |
+
+**Interface, 22 verificações** (Chromium headless dirigido por CDP com WebSocket puro — sem trazer Playwright nem Puppeteer para o repositório, preservando aquela decisão em aberto):
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Tela-portão, entrada e chegada ao quadro | Conferido em imagem |
+| Card com miniatura, título, preços, desconto, loja e copy da IA | Conferido em imagem |
+| Seletor multicanal todo pré-marcado, com a opção mestre | Conferido |
+| "Desmarcar Todos" desabilita "Publicar" com explicação visível | Conferido |
+| Clique em "Publicar" e em "Descartar" retira o card e atualiza os contadores | Conferido |
+| Aba Agendadas com envio previsto, operador e canais pelo rótulo | Conferido em imagem |
+| Oferta já resolvida não exibe botões de ação | Conferido |
+| **Auditoria de movimento** | **Zero elementos com transição ou animação acima de zero** |
+| Acessibilidade e console | Toda caixa com rótulo associado, imagens com `alt`, nenhum erro |
+
+**Concorrência entre dois operadores, 9 verificações** (dois navegadores independentes):
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Nome em uso aparece desabilitado com a marcação "Em uso" | Conferido |
+| Os dois veem exatamente a mesma fila global | Conferido |
+| Publicação de um remove o card da tela do outro, sem F5 | Conferido |
+| Descarte de um remove o card da tela do outro | Conferido |
+| Clique simultâneo no mesmo card | Some das duas telas, listas idênticas ao final |
+| "Sair" libera o próprio nome e mantém o do outro em uso | Conferido |
+
+**Reconexão, 8 verificações:** queda do backend sinalizada na barra superior; conexão restabelecida sozinha; identidade reivindicada de novo e confirmada no servidor; fila ressincronizada, perdendo o que mudou enquanto o socket esteve fora.
+
+Os dados de verificação foram removidos do banco (as cinco coleções voltaram a zero documentos) e os scripts, descartados. Nenhum commit, branch ou push foi realizado.
+
+### 7. Pendências deixadas explicitamente em aberto
+
+- **Nenhuma publicação real acontece.** Os drivers (Categoria 6) não existem. `COMPLETED` significa "ação resolutiva registrada", não "mensagem entregue no canal".
+- **A fila BullMQ não entrou** (Demanda 2.1, decisão do solicitante). O horizonte é lido da coleção de ofertas, e `dispatchScheduler.ts` isola os dois pontos que a fila vai assumir. Enquanto ela não existe, nada move uma oferta de `SCHEDULED` para `COMPLETED`.
+- **O descarte é irreversível e não pede confirmação.** `DISCARDED` bloqueia o produto permanentemente na deduplicação da ingestão, e um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade ("5 a 10 segundos", `FLUXO_OPERACIONAL.md`, Seção 1); se o risco pesar mais que a agilidade, é decisão do solicitante e vira item próprio.
+- **Botão "Copiar para Área de Transferência"**: a rota já aceita `COPIED_CLIPBOARD` e o caminho está verificado ponta a ponta. O item permanece pendente como task exclusivamente de interface.

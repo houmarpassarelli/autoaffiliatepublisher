@@ -9,6 +9,10 @@ import { websocketRoutes } from './websocketRoutes.js';
 export * from './broadcastEvents.js';
 export { resetPresence } from './presenceService.js';
 
+// A presença viva é consultada por outros módulos — a tela-portão precisa saber
+// quais nomes já estão reivindicados antes de qualquer conexão daquele cliente.
+export { isOperatorClaimed } from './connectionRegistry.js';
+
 /**
  * Registra a camada de tempo real no Fastify: o plugin de WebSocket, a rota /ws
  * e o varredor de presenças órfãs.

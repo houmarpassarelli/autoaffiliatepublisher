@@ -20,3 +20,14 @@ export const channelDtoSchema = z.object({
 });
 
 export type ChannelDto = z.infer<typeof channelDtoSchema>;
+
+/**
+ * Carga dos checkboxes do seletor multicanal do card.
+ * O mesmo formato é reaproveitado pelo evento CHANNELS_UPDATED, para que a
+ * atualização em tempo real substitua a lista sem conversão intermediária.
+ */
+export const channelListResponseSchema = z.object({
+  channels: z.array(channelDtoSchema),
+});
+
+export type ChannelListResponse = z.infer<typeof channelListResponseSchema>;

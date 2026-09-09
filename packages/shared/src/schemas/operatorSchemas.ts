@@ -31,3 +31,10 @@ export const availableOperatorDtoSchema = z.object({
 });
 
 export type AvailableOperatorDto = z.infer<typeof availableOperatorDtoSchema>;
+
+/** Carga da tela-portão do Dashboard Remoto. */
+export const availableOperatorListResponseSchema = z.object({
+  operators: z.array(availableOperatorDtoSchema),
+});
+
+export type AvailableOperatorListResponse = z.infer<typeof availableOperatorListResponseSchema>;

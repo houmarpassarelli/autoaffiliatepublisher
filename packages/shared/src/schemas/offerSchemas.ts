@@ -54,3 +54,22 @@ export const offerDtoSchema = z.object({
 });
 
 export type OfferDto = z.infer<typeof offerDtoSchema>;
+
+/**
+ * Filtro da carga inicial de cada aba do Dashboard Remoto.
+ * A ordenação é sempre decrescente por `createdAt` (data de resgate) e não é
+ * parametrizável: ela é regra de domínio, não preferência de quem chama
+ * (FLUXO_OPERACIONAL.md, Seção 3.1).
+ */
+export const offerListQuerySchema = z.object({
+  status: z.enum(OfferStatus).default(OfferStatus.OPEN),
+  limit: z.coerce.number().int().positive().max(200).default(100),
+});
+
+export type OfferListQuery = z.infer<typeof offerListQuerySchema>;
+
+export const offerListResponseSchema = z.object({
+  offers: z.array(offerDtoSchema),
+});
+
+export type OfferListResponse = z.infer<typeof offerListResponseSchema>;

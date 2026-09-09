@@ -101,4 +101,11 @@ offerSchema.index({ externalSku: 1, sourceId: 1 });
 // Consulta de auditoria por operador.
 offerSchema.index({ operatorId: 1, resolvedAt: -1 });
 
+// --- Índice de apoio ao agendamento ---
+
+// Horizonte da fila de disparo: a oferta com o instante de disparo mais distante
+// já reservado. É a consulta que decide se o próximo clique dispara de imediato
+// ou entra escalonado (ESPECS_TECNICAS.md, Seção 7).
+offerSchema.index({ scheduledFor: -1 });
+
 export const OfferModel: Model<OfferAttributes> = model<OfferAttributes>('Offer', offerSchema);
