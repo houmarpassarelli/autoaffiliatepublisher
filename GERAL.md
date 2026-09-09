@@ -8,7 +8,7 @@ Este documento fornece a visão geral executiva, contextualização de mercado, 
 
 **Auto Affiliate Publisher** é uma aplicação de **curadoria assistida e distribuição multicanal de ofertas de programas de afiliados**. O sistema automatiza integralmente o trabalho pesado — descobrir ofertas em APIs, feeds e páginas de lojas parceiras, converter URLs em links rastreados de afiliado, baixar imagens e gerar o texto de divulgação com IA — e entrega o resultado pronto num painel onde um operador humano decide, em 5 a 10 segundos por item, o que vai ao ar e em quais canais.
 
-A aplicação é **unificada em um backend único** (Node.js + TypeScript + Fastify + MongoDB), controlada por **duas interfaces distintas**:
+A aplicação é **unificada em um backend único** (Node.js + TypeScript + Fastify + MongoDB), organizada como **monorepo de quatro workspaces** — o backend, os dois dashboards e um pacote compartilhado que concentra os enums, os DTOs e os contratos de WebSocket usados por todos eles. O monorepo distribui os artefatos; não fragmenta a aplicação: continua havendo um só processo servidor e uma só base de dados. O backend é controlado por **duas interfaces distintas**:
 
 - **Dashboard Administrativo (Local)** — configuração de fontes de coleta, credenciais de API, intervalos de varredura, prompts de IA por fonte, canais de destino, cadastro de operadores e auditoria.
 - **Dashboard Remoto (Colaborativo)** — curadoria e disparo, acessível de qualquer dispositivo, com estado global sincronizado em tempo real via WebSockets entre todos os operadores conectados.

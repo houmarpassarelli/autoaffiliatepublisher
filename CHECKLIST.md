@@ -2,7 +2,7 @@
 
 Este documento compila o status completo de desenvolvimento do projeto **Auto Affiliate Publisher**, categorizado por **Fluxos de Execução**. Cada item possui sua própria caixa de seleção (`- [x]` Implementado no Código, `- [ ]` Pendente, `- [X]` Removido/Substituído) e aponta para o documento de especificação (`.md`) correspondente.
 
-**Estado atual:** projeto em fase de especificação. Nenhuma linha de código escrita. Todos os itens estão em **Pendentes**.
+**Estado atual:** monorepo estruturado (Sprint 0 concluído em 08/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, e os dois dashboards já consomem o contrato compartilhado. Os fluxos de ingestão, IA, publicação e curadoria seguem pendentes.
 
 ## Sumário
 
@@ -65,31 +65,32 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 3. 🏛️ Fluxo de Arquitetura, Infraestrutura e Banco de Dados
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Setup do Projeto Node.js + TypeScript `strict`** (*monorepo npm workspaces com `@aap/shared`, `@aap/api` e os dois dashboards; Fastify com Zod via type provider, conexão MongoDB via Mongoose e Redis via ioredis*) — **Demanda 1.1, Sprint 1**
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#1-visão-geral-da-stack-tecnológica) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 08/09/2026)*
+- [x] **Estrutura de Diretórios do Projeto** (*`config`, `database/models` e `modules/{ingestion,ai,dispatcher,queues,operators,websocket}` em `apps/api/src`; `server` com Fastify e healthcheck; `src/client` desdobrado em `apps/dashboard-admin` e `apps/dashboard-remote`*)
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#8-estrutura-de-diretórios-monorepo) — Seção 8 atualizada para o monorepo em 08/09/2026)*
+- [x] **Docker Compose local** (*MongoDB e Redis com volumes nomeados, healthchecks e portas parametrizadas; `npm run infra:up`*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
+- [x] **Model `sources`** (*fontes de coleta com `cronExpression`, `affiliateTag` e `aiPromptTemplate`; credenciais isoladas em campo próprio, aguardando a definição do método de criptografia*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#21-coleção-sources--fontes-de-coleta))*
+- [x] **Model `offers`** (*ciclo de vida `OPEN/SCHEDULED/COMPLETED/DISCARDED`, `priceHistory` como subdocumento e `aiCopy` por formato de canal*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
+- [x] **Model `operators`** (*nome obrigatório e único, e-mail opcional, `isOnline` e `lastSeenAt` para a presença ativa*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#23-coleção-operators--operadores))*
+- [x] **Model `channels`** (*chave estável única, `mode` AUTOMATED/ASSISTED, `copyFormatKey` tipado e credenciais de envio*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#24-coleção-channels--canais-de-destino))*
+- [x] **Model `dispatch_logs`** (*auditoria imutável com assinatura desnormalizada do operador, `productSku` e preço congelado no disparo*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
+- [x] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}` e `{operatorId,resolvedAt:-1}` aplicados por `ensureIndexes()` no bootstrap e conferidos no banco*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ### Pendentes
-- [ ] **Setup do Projeto Node.js + TypeScript `strict`** (*Fastify, Zod via type provider, conexão MongoDB e Redis*) — **Demanda 1.1, Sprint 1**
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#1-visão-geral-da-stack-tecnológica))*
-- [ ] **Estrutura de Diretórios do Projeto** (*`config`, `database/models`, `modules/{ingestion,ai,dispatcher,queues,operators,websocket}`, `server`, `client`*)
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#8-estrutura-de-diretórios-proposta))*
-- [ ] **Docker Compose local** (*MongoDB e Redis na máquina administrativa*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
-- [ ] **Model `sources`** (*fontes de coleta com credenciais criptografadas, `cronExpression` e `aiPromptTemplate`*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#21-coleção-sources--fontes-de-coleta))*
-- [ ] **Model `offers`** (*ciclo de vida `OPEN/SCHEDULED/COMPLETED/DISCARDED`, histórico de preços e copy da IA*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
-- [ ] **Model `operators`** (*nome obrigatório, e-mail opcional, `isOnline` controlado por WebSocket*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#23-coleção-operators--operadores))*
-- [ ] **Model `channels`** (*canais dinâmicos com `mode` AUTOMATED/ASSISTED e credenciais de envio*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#24-coleção-channels--canais-de-destino))*
-- [ ] **Model `dispatch_logs`** (*auditoria com assinatura do operador e `productSku` para cruzamento de comissões*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
-- [ ] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}`, `{operatorId,resolvedAt:-1}`*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
-- [ ] **Servidor WebSocket no Fastify com Broadcast** (*eventos `OFFER_CREATED`, `OFFER_STATE_CHANGED`, `OFFER_PUBLISHED`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED`, `CHANNELS_UPDATED`*) — **Demanda 2.2, Sprint 2**
+- [ ] **Servidor WebSocket no Fastify com Broadcast** (*eventos `OFFER_CREATED`, `OFFER_STATE_CHANGED`, `OFFER_PUBLISHED`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED`, `CHANNELS_UPDATED` — contratos já tipados em `@aap/shared`; implementação sobre `@fastify/websocket`*) — **Demanda 2.2, Sprint 2**
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
 - [ ] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` — método a definir*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
+- [ ] **Migrar a imagem do MongoDB para a linha 8.x** (*fixada em `mongo:7` no `docker-compose.yml`: as imagens 8.x recusam iniciar nesta máquina com "Linux kernel versions 6.19 and newer has a known incompatibility" — SERVER-121912*)
+  *(Ref: [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 08/09/2026, item 5)*
 
 ---
 
@@ -206,8 +207,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 - [ ] **Definir o provedor e modelo de LLM** (*com o custo por oferta processada, insumo direto do modelo de custos*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#33-escolha-do-provedor))*
-- [ ] **Escolher entre `@fastify/websocket` e Socket.IO**
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#1-visão-geral-da-stack-tecnológica))*
 - [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [ ] **Implementar reconciliação de presença órfã** (*heartbeat com expiração para socket caído sem `close` limpo, evitando `isOnline: true` travado*)
@@ -218,4 +217,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 
 ### Concluídas
-*(nenhum item)*
+- [x] **Escolha da biblioteca de WebSocket: `@fastify/websocket`** (*plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio — suficiente para os 6 eventos de broadcast e o controle de presença*)
+  *(Decidido em 08/09/2026 — ver [HISTORICO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/HISTORICO.md))*
+- [x] **Escolha da camada de acesso ao MongoDB: Mongoose** (*schemas declarativos com os índices junto do model; a transição atômica por `findOneAndUpdate` permanece disponível*)
+  *(Decidido em 08/09/2026 — ver [HISTORICO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/HISTORICO.md))*
+- [x] **Escolha da stack dos dashboards: Vite + React + TypeScript** (*com Tabler.io como kit de componentes, Tailwind CSS sem preflight e regra global que zera animações e transições*)
+  *(Decidido em 08/09/2026 — ver [HISTORICO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/HISTORICO.md))*

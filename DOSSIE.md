@@ -84,3 +84,37 @@ Documento central de planejamento do projeto (**Bíblia do Projeto**). Registra,
 18. **Escalabilidade Gradual (Estratégia de Longo Prazo)**: quando houver métricas claras de quais formatos e nichos convertem melhor, a publicação automática pode ser habilitada **apenas para canais seguros** (Telegram e site próprio), mantendo a curadoria manual restrita a WhatsApp e Instagram. Registrado como evolução planejada, não como escopo inicial.
 
 19. **Escopo desta Entrega**: esta interação registra a especificação fundacional completa do projeto (Fluxo 2 / `INSTRUCAO_DOSSIE.md`, apenas documentação). Nenhum código foi criado nesta sessão. Toda a documentação periférica do projeto foi criada em cascata a partir deste registro: `GERAL.md`, `ARQUITETURA.md`, `FLUXO_OPERACIONAL.md` (documento novo, proposto e aprovado nesta sessão para abrigar regras de domínio e ciclo de vida da oferta), `ESPECS_TECNICAS.md`, `TOOLS.md`, `MONETIZACAO.md` e `CHECKLIST.md` — este último populado com o backlog completo dos Sprints 1 a 3, todos os itens em estado **Pendente**. `DEVLOG.md` e `HISTORICO.md` permanecem intocados, conforme a regra de arquivos protegidos.
+
+---
+
+<a id="interacao-2"></a>
+## Interação 2
+
+**Data de Registro:** 08 de Setembro de 2026
+
+**Contexto/Pergunta:** ESTRUTURAÇÃO INICIAL DO PROJETO — Encerramento da fase exclusivamente documental. O usuário determinou o início do desenvolvimento a partir das tasks de estruturação já registradas no `CHECKLIST.md`, acrescentando uma exigência não prevista na Interação 1: **o projeto deve ser um monorepo**. A sessão de execução resultante fechou três decisões técnicas que estavam em aberto e produziu a primeira base de código do projeto.
+
+**Principais Pontos:**
+
+1. **Exigência de Monorepo (Nova Decisão Estruturante)**: a Interação 1 homologou um backend único com dois dashboards, mas descreveu a organização física do código como um projeto único (`src/config`, `src/database`, `src/modules`, `src/server`, `src/client`). O usuário determinou a organização em **monorepo**. A decisão não altera o modelo de aplicação — continua havendo **um só processo servidor** e uma só base de dados —, altera a distribuição dos artefatos: o servidor, as duas interfaces e um pacote de contrato comum passam a ser workspaces independentes, com `package.json` e ciclo de build próprios.
+
+2. **Preservação Integral das Fronteiras de Módulo**: a reorganização não inventou estrutura nova. Os diretórios `config`, `database/models` e os seis módulos (`ingestion`, `ai`, `dispatcher`, `queues`, `operators`, `websocket`) foram transportados 1:1 para dentro de `apps/api/src`, com os mesmos nomes e as mesmas responsabilidades. O antigo `src/client` desdobrou-se em `apps/dashboard-admin` e `apps/dashboard-remote`, refletindo que as duas interfaces têm públicos, ciclos de build e dependências distintos.
+
+3. **`packages/shared` — Justificativa Técnica do Monorepo**: acréscimo que não existia na proposta original e que sustenta a decisão. Concentra os enums de estado, os DTOs em Zod e o catálogo tipado dos eventos WebSocket. Sem ele, esses contratos precisariam ser reescritos nos dashboards e mantidos manualmente em sincronia com o backend. Três consequências registradas: o estado global da oferta é declarado uma única vez; uma mudança de formato em evento de broadcast quebra a compilação do dashboard em vez da tela do operador em produção; e os DTOs compartilhados **não possuem campo de credencial** — a regra do Thin Client passa a ser sustentada pelo próprio tipo, não apenas pela disciplina de quem escreve a rota.
+
+4. **Decisões Técnicas Fechadas nesta Interação** (todas estavam registradas como pendências no `CHECKLIST.md`, Categoria 8):
+   - **Biblioteca de WebSocket: `@fastify/websocket`**, escolhida sobre o Socket.IO. Plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio, suficiente para os seis eventos de broadcast e o controle de presença especificados.
+   - **Camada de acesso ao MongoDB: Mongoose**, escolhida sobre o driver oficial. Motivo: schemas declarativos com os índices junto do model, o que acelera os CRUDs e mantém as cinco coleções legíveis. A transição atômica por `findOneAndUpdate`, base da trava anti-concorrência, permanece integralmente disponível.
+   - **Stack dos dashboards: Vite + React + TypeScript**, mantendo Tabler.io como kit de componentes e Tailwind CSS como camada de utilitários. O Tailwind entra **sem o preflight**, porque o reset dele sobrescreveria os estilos base do Tabler. O requisito de "sem animações" da Interação 1 foi implementado como regra global de CSS que zera `animation` e `transition`.
+
+5. **Fixação do TypeScript na Linha 5.9**: a major 7 já é a versão estável publicada, mas o `typescript-eslint` declara suporte apenas até `<6.1.0`. Manter o lint funcional prevaleceu sobre adotar a major mais recente. Registrado como decisão temporária, a reavaliar quando o `typescript-eslint` publicar suporte.
+
+6. **Parâmetro Δ Deixa de Ser Conceito**: o intervalo do delay progressivo anti-spam existe agora como a variável de ambiente `DISPATCH_INTERVAL_MS`, validada na inicialização. Nenhum valor de delay é escrito diretamente na lógica. A definição do **valor operacional** continua sendo decisão em aberto, coerente com o registrado na Interação 1 (referência de 3 minutos contra a recomendação de mercado de 30 a 60 minutos).
+
+7. **Restrições de Ambiente Encontradas na Execução** (registradas por afetarem a reprodutibilidade da infraestrutura local):
+   - **MongoDB fixado temporariamente na versão 7**: as imagens 8.x recusam a inicialização na máquina do usuário com a mensagem `Linux kernel versions 6.19 and newer has a known incompatibility` (SERVER-121912). O kernel visto pelos containers é o 7.0.x da VM do Docker, ainda que o host reporte 6.17. Testadas e recusadas as tags `8`, `8.0` e `8.3`. A migração para a linha 8.x foi registrada como task pendente.
+   - **Conflitos de porta com outros projetos da máquina**: a porta 27017 já está ocupada por outro MongoDB e a 5173 por outro processo de desenvolvimento. O ambiente local usa 27018 para o MongoDB e 5180/5181 para os dashboards, com as portas parametrizadas por variável de ambiente.
+
+8. **Estado do Projeto ao Fim desta Interação**: as nove tasks de estruturação da Categoria 3 do `CHECKLIST.md` estão implementadas e verificadas — o backend sobe conectado a MongoDB e Redis, as cinco coleções existem com os quatro índices obrigatórios aplicados e conferidos no banco, e os dois dashboards consomem o contrato compartilhado. Permanecem pendentes os fluxos de ingestão, IA, publicação multicanal e curadoria, além das decisões em aberto sobre Playwright/Puppeteer, provedor de LLM, criptografia de credenciais, política de divergência de preço na reverificação e estratégia de exposição segura do Dashboard Remoto.
+
+9. **Escopo desta Entrega**: a execução do código ocorreu sob o Fluxo 1 (`INSTRUCAO_EXECUCAO.md`), com plano registrado no `HISTORICO.md` e detalhamento no `DEVLOG.md`. O presente registro no dossiê e a atualização em cascata da documentação periférica ocorreram sob o Fluxo 2 (`INSTRUCAO_DOSSIE.md`). Documentos sincronizados nesta cascata: `ARQUITETURA.md` (Seções 1, 7 e 8), `ESPECS_TECNICAS.md`, `TOOLS.md`, `GERAL.md` e `CHECKLIST.md`. `DEVLOG.md` e `HISTORICO.md` não foram alterados no Fluxo 2, conforme a regra de arquivos protegidos.

@@ -1,6 +1,6 @@
 # Arquitetura de Software e Sistemas - Projeto Auto Affiliate Publisher
 
-Este documento compila a arquitetura técnica completa do **Auto Affiliate Publisher**, detalhando a stack, o modelo de aplicação unificada com dois dashboards, o pipeline de ingestão em 5 etapas, a separação rígida entre coleta determinística e refinamento por IA, a comunicação híbrida (REST HTTP + WebSockets permanentes), a fila de disparos com delay progressivo anti-spam e o modelo **Thin Client** de centralização da execução.
+Este documento compila a arquitetura técnica completa do **Auto Affiliate Publisher**, detalhando a stack, a organização em monorepo, o modelo de aplicação unificada com dois dashboards, o pipeline de ingestão em 5 etapas, a separação rígida entre coleta determinística e refinamento por IA, a comunicação híbrida (REST HTTP + WebSockets permanentes), a fila de disparos com delay progressivo anti-spam e o modelo **Thin Client** de centralização da execução.
 
 ---
 
@@ -10,17 +10,17 @@ A aplicação é um **backend único** que expõe duas interfaces distintas. Nã
 
 | Camada / Módulo | Tecnologia | Papel no Sistema |
 | :--- | :--- | :--- |
-| **Runtime & Linguagem** | Node.js v20+ / TypeScript (`strict: true`) | Base de toda a aplicação. Preferência declarada por Node puro; Python apenas como *fallback* pontual de scraping complexo. |
+| **Runtime & Linguagem** | Node.js v22.12+ / TypeScript 5.9 (`strict: true`) | Base de toda a aplicação. Preferência declarada por Node puro; Python apenas como *fallback* pontual de scraping complexo. O TypeScript está fixado na linha 5.9 porque o `typescript-eslint` ainda não suporta a major 7. |
 | **Servidor HTTP** | Fastify | Roteamento REST, plugins modulares, servir os dois dashboards e receber comandos do cliente remoto. |
-| **Validação de Schemas** | Zod | Validação de entradas, payloads e DTOs, integrado ao Fastify via *type provider*. |
-| **Banco de Dados** | MongoDB | Persistência de fontes, ofertas, operadores, canais e logs de auditoria. Escolhido pela flexibilidade com payloads semiestruturados de scrapers e alto volume textual. |
-| **Tempo Real** | WebSocket (`@fastify/websocket` ou Socket.IO) | Sincronização do estado global de ofertas entre todos os operadores conectados e controle de presença. |
+| **Validação de Schemas** | Zod | Validação de entradas, payloads e DTOs, integrado ao Fastify via *type provider*. Os schemas de domínio vivem no pacote compartilhado e são consumidos igualmente pelo backend e pelos dashboards. |
+| **Banco de Dados** | MongoDB via **Mongoose** | Persistência de fontes, ofertas, operadores, canais e logs de auditoria. Escolhido pela flexibilidade com payloads semiestruturados de scrapers e alto volume textual. O Mongoose foi adotado pelos schemas declarativos com os índices junto do model; a transição atômica por `findOneAndUpdate` permanece disponível. |
+| **Tempo Real** | WebSocket via **`@fastify/websocket`** | Sincronização do estado global de ofertas entre todos os operadores conectados e controle de presença. Plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio. |
 | **Filas & Agendamento** | BullMQ sobre Redis | Fila de disparos com delay progressivo anti-spam, retentativas e concorrência controlada. |
 | **Agendamento de Coleta** | Cron interno (`node-cron`) | Dispara a varredura de cada fonte conforme o intervalo configurado em banco. |
 | **Ingestão Dinâmica** | Puppeteer / Playwright | Scraping de páginas dinâmicas e SPAs de lojas sem API aberta. |
 | **Ingestão Estática** | Cheerio / Axios | Scraping de páginas estáticas e leitura de feeds RSS/XML/CSV. |
 | **Inteligência** | LLM via API | Refinamento de copywriting a partir de payload já estruturado. **Nunca** usado para navegar ou extrair. |
-| **Frontend (2 Dashboards)** | Tabler.io UI Kit + Tailwind CSS | Interfaces limpas, sem animações pesadas, reativas via WebSocket. |
+| **Frontend (2 Dashboards)** | Vite + React + TypeScript, com Tabler.io UI Kit + Tailwind CSS | Interfaces limpas, **sem animações**, reativas via WebSocket. O Tailwind entra sem o *preflight*, que sobrescreveria os estilos base do Tabler. |
 
 ---
 
@@ -180,28 +180,68 @@ Implementada com **BullMQ sobre Redis**. Regra central:
 - **Fila vazia no momento do clique** → o item é disparado imediatamente e migra direto de `aberta` para `concluida`.
 - **Fila ocupada** → o item entra em `agendada`, recebendo um delay progressivo em relação ao último job enfileirado (item 1 imediato, item 2 em +Δ, item 3 em +2Δ, e assim por diante), e só migra para `concluida` quando o backend confirmar a publicação.
 
-O intervalo Δ é **parâmetro de balanceamento configurável**, não constante fixa. O valor de referência inicial é de 3 minutos; o levantamento de mercado registrado no `DOSSIE.md` indica que intervalos de 30 a 60 minutos preservam melhor a audiência e reduzem risco de filtro anti-spam. A definição do valor operacional fica para a fase de execução.
+O intervalo Δ é **parâmetro de balanceamento configurável**, não constante fixa. Ele existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS`, validada na inicialização do backend — nenhum valor de delay é escrito diretamente na lógica. O valor de referência inicial é de 3 minutos; o levantamento de mercado registrado no `DOSSIE.md` indica que intervalos de 30 a 60 minutos preservam melhor a audiência e reduzem risco de filtro anti-spam. A definição do valor operacional permanece decisão em aberto.
 
 ---
 
-## 8. Estrutura de Diretórios Proposta
+## 8. Estrutura de Diretórios (Monorepo)
+
+O projeto é organizado como **monorepo com npm workspaces**. Isso não contradiz a decisão de backend único: continua existindo **um só processo servidor**, com módulos internos compartilhando a mesma base de dados. O que o monorepo separa são os artefatos que já eram naturalmente distintos — o servidor e as duas interfaces — mais um pacote de contrato comum entre eles.
 
 ```
-├── src/
-│   ├── config/              # Configurações de ambiente, MongoDB e Redis
-│   ├── database/
-│   │   └── models/          # Source, Offer, Operator, Channel, DispatchLog
-│   ├── modules/
-│   │   ├── ingestion/       # Scrapers (Playwright/Cheerio), clientes de API, leitores RSS
-│   │   ├── ai/              # Integração LLM: prompts e formatadores de copy
-│   │   ├── dispatcher/      # Drivers de envio (WhatsApp, Telegram, Instagram, TikTok, Site)
-│   │   ├── queues/          # Configuração de filas e workers BullMQ
-│   │   ├── operators/       # CRUD de operadores e controle de presença ativa
-│   │   └── websocket/       # Handlers de eventos em tempo real e broadcast
-│   ├── server/              # Instância do Fastify, rotas HTTP e plugins
-│   └── client/              # Interfaces Tabler.io (Dashboard Admin e Dashboard Remoto)
-└── package.json
+├── package.json                  # Raiz: workspaces e scripts orquestradores
+├── tsconfig.base.json            # strict: true, herdado por todos os pacotes
+├── docker-compose.yml            # MongoDB e Redis locais
+├── .env.example                  # Contrato das variáveis de ambiente
+│
+├── packages/
+│   └── shared/                   # @aap/shared — contrato único de domínio
+│       └── src/
+│           ├── enums/            # SourceType, OfferStatus, ChannelMode, DispatchActionType, CopyFormat
+│           ├── schemas/          # DTOs em Zod das cinco coleções
+│           └── contracts/        # Eventos WebSocket e payloads de comando de disparo
+│
+└── apps/
+    ├── api/                      # @aap/api — backend único
+    │   └── src/
+    │       ├── config/           # Ambiente validado por Zod, MongoDB e Redis
+    │       ├── database/
+    │       │   └── models/       # Source, Offer, Operator, Channel, DispatchLog
+    │       ├── modules/
+    │       │   ├── ingestion/    # Scrapers (Playwright/Cheerio), clientes de API, leitores RSS
+    │       │   ├── ai/           # Integração LLM: prompts e formatadores de copy
+    │       │   ├── dispatcher/   # Drivers de envio (WhatsApp, Telegram, Instagram, TikTok, Site)
+    │       │   ├── queues/       # Configuração de filas e workers BullMQ
+    │       │   ├── operators/    # CRUD de operadores e controle de presença ativa
+    │       │   └── websocket/    # Handlers de eventos em tempo real e broadcast
+    │       ├── server/           # Instância do Fastify, rotas HTTP e plugins
+    │       └── main.ts           # Bootstrap e desligamento gracioso
+    ├── dashboard-admin/          # @aap/dashboard-admin — painel local de configuração
+    └── dashboard-remote/         # @aap/dashboard-remote — painel de curadoria colaborativa
 ```
+
+### 8.1. Mapeamento com a Proposta Original
+
+A adoção do monorepo preservou integralmente os nomes e as fronteiras dos módulos definidos na especificação fundacional:
+
+| Proposta original | Localização atual | Observação |
+| :--- | :--- | :--- |
+| `src/config/` | `apps/api/src/config/` | Idêntico. |
+| `src/database/models/` | `apps/api/src/database/models/` | Idêntico. As cinco coleções permanecem as mesmas. |
+| `src/modules/*` | `apps/api/src/modules/*` | Os seis módulos foram mantidos com os mesmos nomes e responsabilidades. |
+| `src/server/` | `apps/api/src/server/` | Idêntico. |
+| `src/client/` | `apps/dashboard-admin/` e `apps/dashboard-remote/` | Desdobrado em dois workspaces: as interfaces têm ciclos de build, dependências e públicos distintos. |
+| — | `packages/shared/` | **Acréscimo.** Não existia na proposta original; ver Seção 8.2. |
+
+### 8.2. O Pacote Compartilhado como Contrato Único
+
+`packages/shared` é a justificativa técnica do monorepo. Sem ele, os enums de estado da oferta, os DTOs e o catálogo de eventos WebSocket precisariam ser reescritos nos dashboards e mantidos manualmente em sincronia com o backend — exatamente o tipo de duplicação que produz divergência silenciosa entre o que o servidor emite e o que a interface espera receber.
+
+Com ele, valem três garantias:
+
+- **Estado global sem ambiguidade**: os quatro estados da oferta são declarados uma única vez e consumidos por backend e interfaces a partir da mesma origem.
+- **Contrato de WebSocket verificável em compilação**: um evento de broadcast que mude de formato quebra o *typecheck* do dashboard, e não a tela do operador em produção.
+- **Credenciais fora do contrato**: os DTOs compartilhados não têm campo de credencial. A fonte expõe apenas os nomes das chaves cadastradas, nunca os valores — a regra do Thin Client (Seção 6) passa a ser sustentada pelo próprio tipo, e não apenas pela disciplina de quem escreve a rota.
 
 ---
 

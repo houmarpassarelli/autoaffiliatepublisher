@@ -1,0 +1,22 @@
+/* Kit de componentes base do projeto (botões, cards, tabelas, formulários). */
+@import '@tabler/core/dist/css/tabler.min.css';
+
+/*
+ * Tailwind entra apenas com o tema e os utilitários. O preflight é omitido de
+ * propósito: ele reescreveria os estilos base do Tabler, que é o kit oficial
+ * das duas interfaces.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/*
+ * Requisito explícito do projeto: as interfaces não têm animações nem transições.
+ * Apenas as reações corretas e a reatividade em tempo real via WebSocket.
+ */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}

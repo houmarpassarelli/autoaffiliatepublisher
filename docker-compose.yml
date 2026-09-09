@@ -1,0 +1,46 @@
+# docker-compose.yml
+# Infraestrutura local da máquina administrativa: MongoDB (persistência) e Redis (fila BullMQ).
+# Referência: TOOLS.md, Seção 8 — Infraestrutura Local.
+
+services:
+  # Persistência de fontes, ofertas, operadores, canais e logs de disparo.
+  #
+  # Versão fixada em 7 de forma temporária: as imagens 8.x recusam a inicialização
+  # neste host com "Linux kernel versions 6.19 and newer has a known incompatibility"
+  # (SERVER-121912), porque o kernel visto pelos containers é o 7.0.x da VM do Docker.
+  # Migrar para 8.x assim que a MongoDB publicar a correção.
+  mongodb:
+    image: mongo:7
+    container_name: aap-mongodb
+    restart: unless-stopped
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-auto_affiliate_publisher}
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend da fila de disparos com delay progressivo (BullMQ).
+  redis:
+    image: redis:8-alpine
+    container_name: aap-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb-data:
+  redis-data:

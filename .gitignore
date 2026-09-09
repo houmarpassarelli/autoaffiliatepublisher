@@ -1,0 +1,24 @@
+# Dependências
+node_modules/
+
+# Artefatos de build
+dist/
+*.tsbuildinfo
+
+# Variáveis de ambiente (credenciais de API, tokens de canal)
+.env
+.env.local
+.env.*.local
+
+# Volumes e dados locais de infraestrutura
+.docker-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional e editores
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

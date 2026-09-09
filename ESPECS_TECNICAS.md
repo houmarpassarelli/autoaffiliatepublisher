@@ -22,6 +22,8 @@ O material fundacional do projeto (Interação 1 do `DOSSIE.md`) descreve os est
 | canal | `Channel` | Canal |
 | log de disparo | `DispatchLog` | Log de Disparo |
 
+**Onde os tipos vivem:** os enums, os DTOs em Zod e os contratos de mensagem desta especificação são declarados uma única vez no pacote compartilhado `packages/shared` (`@aap/shared`) e consumidos igualmente pelo backend e pelos dois dashboards. Os *models* do MongoDB, apresentados na Seção 2 com Mongoose, são a camada de persistência e vivem em `apps/api/src/database/models`. A distinção é deliberada: o model trafega `ObjectId` e credenciais; o DTO compartilhado trafega identificadores em texto e **nunca** carrega credenciais.
+
 ---
 
 ## 2. Esquemas do Banco de Dados (MongoDB)
@@ -29,7 +31,7 @@ O material fundacional do projeto (Interação 1 do `DOSSIE.md`) descreve os est
 ### 2.1. Coleção `sources` — Fontes de Coleta
 
 ```typescript
-// src/database/models/sourceModel.ts
+// apps/api/src/database/models/sourceModel.ts
 
 /**
  * Tipo de mecanismo de coleta utilizado pela fonte.
@@ -62,7 +64,7 @@ export interface SourceDocument {
 ### 2.2. Coleção `offers` — Ofertas Coletadas e Processadas
 
 ```typescript
-// src/database/models/offerModel.ts
+// apps/api/src/database/models/offerModel.ts
 
 /**
  * Estados do ciclo de vida da oferta.
@@ -119,7 +121,7 @@ export interface OfferDocument {
 ### 2.3. Coleção `operators` — Operadores
 
 ```typescript
-// src/database/models/operatorModel.ts
+// apps/api/src/database/models/operatorModel.ts
 
 export interface OperatorDocument {
   _id: ObjectId;
@@ -137,7 +139,7 @@ export interface OperatorDocument {
 ### 2.4. Coleção `channels` — Canais de Destino
 
 ```typescript
-// src/database/models/channelModel.ts
+// apps/api/src/database/models/channelModel.ts
 
 /**
  * Modo de execução do canal.
@@ -165,7 +167,7 @@ export interface ChannelDocument {
 ### 2.5. Coleção `dispatch_logs` — Auditoria e Comissionamento
 
 ```typescript
-// src/database/models/dispatchLogModel.ts
+// apps/api/src/database/models/dispatchLogModel.ts
 
 /**
  * Natureza da ação resolutiva registrada.
@@ -370,7 +372,7 @@ Antes de publicar em canal público, o worker de disparo revalida preço e dispo
 
 Registrados para resolução na fase de execução:
 
-1. **Valor operacional do `intervalMs`** do delay progressivo (Seção 7).
+1. **Valor operacional do `intervalMs`** do delay progressivo (Seção 7). O parâmetro já existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS`; o que permanece em aberto é o valor a adotar em operação.
 2. **Política de divergência de preço** na reverificação pré-disparo (Seção 8.2).
 3. **Método de criptografia** das credenciais em `sources.credentials` e `channels.credentials`.
 4. **Estratégia de WhatsApp**: qual biblioteca/instância não-oficial, se houver, ou modo exclusivamente assistido.

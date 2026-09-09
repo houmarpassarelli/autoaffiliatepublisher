@@ -110,14 +110,14 @@ Essa verificação faz parte do cadastro de uma fonte no Dashboard Administrativ
 
 | Ferramenta | Versão / Nota | Papel |
 | :--- | :--- | :--- |
-| **Node.js** | v20+ | Runtime único da aplicação. |
-| **TypeScript** | `strict: true` | Tipagem obrigatória em todo o código. |
+| **Node.js** | v22.12+ | Runtime único da aplicação. |
+| **TypeScript** | 5.9, `strict: true` | Tipagem obrigatória em todo o código. Fixado na linha 5.9 porque o `typescript-eslint` ainda não suporta a major 7. |
 | **Fastify** | — | Servidor HTTP, plugins e rotas. |
 | **Zod** | Via *type provider* do Fastify | Validação de payloads e DTOs. |
-| **MongoDB** | Driver oficial ou Mongoose | Persistência. Escolha do usuário pela facilidade com logs e volume textual. |
+| **MongoDB** | **Mongoose** | Persistência. Escolha do usuário pela facilidade com logs e volume textual. O Mongoose foi adotado pelos schemas declarativos com os índices junto do model. |
 | **Redis** | — | Backend da fila BullMQ. |
 | **BullMQ** | — | Fila de disparos com delay progressivo, retentativas e concorrência. |
-| **@fastify/websocket** ou **Socket.IO** | Escolha a fechar | Sincronização do estado global e presença de operadores. |
+| **@fastify/websocket** | **Escolhido** sobre o Socket.IO | Sincronização do estado global e presença de operadores. Plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio. |
 
 ---
 
@@ -125,10 +125,12 @@ Essa verificação faz parte do cadastro de uma fonte no Dashboard Administrativ
 
 | Ferramenta | Papel |
 | :--- | :--- |
+| **Vite** | Servidor de desenvolvimento e empacotador dos dois dashboards, com proxy para o backend. |
+| **React + TypeScript** | Camada reativa das interfaces, alimentada pelos eventos de WebSocket. |
 | **Tabler.io UI Kit** | Biblioteca de componentes já utilizada pelo usuário — botões, modais, tabelas, formulários e cards. |
-| **Tailwind CSS** | Utilitários de estilo e estruturação de layout. |
+| **Tailwind CSS** | Utilitários de estilo e estruturação de layout. Importado **sem o preflight**, que sobrescreveria os estilos base do Tabler. |
 
-**Requisito explícito do usuário:** as interfaces **não devem ter animações** nem complexidade visual. Apenas as reações corretas e reatividade em tempo real via WebSocket.
+**Requisito explícito do usuário:** as interfaces **não devem ter animações** nem complexidade visual. Apenas as reações corretas e reatividade em tempo real via WebSocket. O requisito está implementado como regra global de CSS que zera `animation` e `transition`.
 
 ---
 
@@ -139,9 +141,13 @@ A aplicação roda na **máquina administrativa**, que concentra:
 - Os workers de ingestão e de disparo.
 - Todas as credenciais de API e tokens de canal.
 
-| Serviço | Provisionamento sugerido | Papel |
+| Serviço | Provisionamento | Papel |
 | :--- | :--- | :--- |
-| **MongoDB** | Docker Compose local | Persistência de fontes, ofertas, operadores, canais e logs. |
-| **Redis** | Docker Compose local | Fila BullMQ. |
+| **MongoDB** | Docker Compose local (`mongo:7`) | Persistência de fontes, ofertas, operadores, canais e logs. |
+| **Redis** | Docker Compose local (`redis:8-alpine`) | Fila BullMQ. |
+
+> **Nota de versão do MongoDB:** a imagem está fixada na linha 7 em caráter temporário. As imagens 8.x recusam a inicialização na máquina administrativa com a mensagem `Linux kernel versions 6.19 and newer has a known incompatibility` (SERVER-121912), porque o kernel visto pelos containers é o 7.0.x da VM do Docker. A migração para a linha 8.x está registrada como task pendente no `CHECKLIST.md`.
+
+**Portas:** todas as portas publicadas são parametrizadas por variável de ambiente, porque a máquina administrativa pode já ter serviços ocupando as portas padrão. O ambiente local em uso adota 27018 para o MongoDB, 6379 para o Redis, 3333 para o backend e 5180/5181 para os dashboards administrativo e remoto.
 
 **Exposição do Dashboard Remoto:** como não há autenticação real (ver `ESPECS_TECNICAS.md`, Seção 2.3), o acesso remoto deve ser feito por rede confiável — VPN, túnel reverso ou proxy com autenticação própria. **Decisão em aberto**, a fechar na fase de execução.
