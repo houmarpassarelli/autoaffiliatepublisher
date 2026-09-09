@@ -135,3 +135,71 @@ O `ESPECS_TECNICAS.md`, Seção 3.2, registra o risco de `isOnline: true` órfã
 | Presença órfã antes do bootstrap | `releasedPresences: 1` no log e `isOnline: false` em banco |
 
 Os operadores criados para o teste foram removidos do banco e os scripts de verificação, descartados. Nenhum commit, branch ou push foi realizado.
+
+---
+
+## 2026-09-09 — Interface com Tabler.io + Tailwind, sem animações
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 09/09/2026, 03:38.
+
+### 1. Novo workspace `packages/ui` (`@aap/ui`)
+
+Quarto workspace do monorepo, com os componentes, a folha de estilo base e os hooks de interface. Criado pelo mesmo raciocínio que justificou o `@aap/shared`: as duas telas são o mesmo produto e usam o mesmo kit. Sem ele, cada componente seria escrito duas vezes e o requisito de "sem animações" viraria duas regras passíveis de divergir.
+
+| Grupo | Componentes |
+| :--- | :--- |
+| Layout | `AppShell`, `PageHeader` |
+| Superfícies | `Card`, `Modal` |
+| Ações | `Button`, `Badge` |
+| Dados | `DataTable`, `LoadingState`, `EmptyState`, `ErrorState` |
+| Formulário | `TextField`, `TextAreaField`, `SelectField`, `CheckboxField` |
+| Navegação | `Tabs` |
+| Feedback | `Alert` |
+| Hooks | `useBackendHealth` |
+
+### 2. Como o requisito passou a ser sustentado
+
+Antes existia apenas a regra global de CSS. Agora são três camadas, e a principal é de arquitetura:
+
+1. **O JavaScript do Bootstrap/Tabler não é carregado.** `Modal` e `Tabs` são React puro sobre as classes CSS do kit. Além do conflito entre a manipulação direta do DOM e a árvore controlada pelo React, o JS do Bootstrap coordena exibição por eventos `transitionend`, que se tornam imprevisíveis quando as transições estão zeradas.
+2. **Nenhum componente recebe as classes de transição** `fade`, `show` (no diálogo) ou `collapsing`.
+3. **Rede de segurança em CSS**, mantida para cobrir estilos de terceiros.
+
+### 3. O que "apenas as reações corretas" exigiu na prática
+
+- **Carregamento sem spinner.** O spinner do kit é uma `animation`, que a regra global congela — e um spinner parado comunica o oposto do que deveria. O `Button` responde com desabilitação e troca de rótulo (`loadingLabel`); o `LoadingState` responde com texto.
+- **`:focus-visible` preservado e padronizado.** "Sem animações" não pode virar "sem retorno visual": o indicador de foco é o que torna a interface operável por teclado.
+- **Erro nunca confundido com vazio.** O `DataTable` verifica erro antes de carregamento, e ambos antes da lista vazia — "não consegui carregar" e "não há registros" exigem ações diferentes do operador.
+- **Acessibilidade tratada nos componentes, não em cada tela.** A moldura de campo gera e liga os identificadores de rótulo, dica e erro; o `Alert` escolhe entre `role="alert"` e `role="status"` conforme o tom; o `Modal` gerencia foco, `aria-modal` e trava de rolagem.
+
+### 4. Eliminação da duplicação
+
+`useBackendHealth.ts` e `styles/index.css` estavam copiados byte a byte nos dois dashboards. Ambos foram removidos dos apps e passaram para o pacote. O hook ganhou `refresh()`, que faltava: a tela sabia relatar a falha, mas não oferecia nova tentativa sem recarregar a página.
+
+### 5. Aplicação nos dois dashboards
+
+- **Administrativo**: shell, cartão de saúde da máquina administrativa com os três serviços em selos de estado, e os quatro módulos de CRUD previstos.
+- **Remoto**: shell com indicador de conexão na barra superior e as três abas trocando por estado real, cada uma com o texto de ausência específico do seu momento do ciclo de vida.
+
+### 6. Bug encontrado e corrigido na conferência visual
+
+A primeira versão do `Modal` substituía o wrapper `.modal` do Bootstrap por um contêiner próprio com backdrop customizado. O diálogo renderizou **sem superfície**: título, corpo e rodapé flutuando sobre a página. Causa: o `.modal-content` herda fundo, borda e raio de variáveis CSS declaradas no escopo de `.modal`; sem esse wrapper, elas ficam indefinidas e o fundo cai para transparente.
+
+Correção: a marcação passou a preservar a estrutura do kit — `.modal-backdrop` mais `.modal` > `.modal-dialog` > `.modal-content` —, mantendo a ausência da classe `fade` e o controle inteiramente em React. O CSS do backdrop próprio foi removido. O motivo está documentado no comentário do componente, para que a estrutura não seja "simplificada" de novo no futuro.
+
+Este bug só apareceu porque a conferência foi visual: `typecheck`, `lint` e `build` passavam com o modal invisível.
+
+### 7. Validações executadas
+
+`typecheck`, `lint` e `build` limpos nos cinco workspaces. Conferência visual com Chromium headless, instalado fora do repositório para não antecipar a decisão em aberto entre Playwright e Puppeteer no módulo de scraping:
+
+| Verificação | Resultado |
+| :--- | :--- |
+| Dashboard administrativo renderizado | Shell, alerta, cartão de saúde com MongoDB e Redis conectados, e os quatro módulos |
+| Dashboard remoto renderizado | Shell, selo de conexão e as três abas com o estado vazio correspondente |
+| **Auditoria de movimento em tempo de execução** | **Zero elementos com `transition-duration` ou `animation-duration` acima de zero** |
+| Abas | Clique em "Agendadas" troca a aba ativa e o conteúdo do painel |
+| Modal | `aria-modal`, rótulo ligado ao título, foco dentro do diálogo, rolagem da página travada e remoção do DOM ao pressionar Esc |
+| Kit completo | `DataTable`, campos de formulário com erro de validação, botões nos quatro estados, e os três estados de retorno conferidos em imagem |
+
+A conferência do kit usou uma página de prévia temporária dentro do dashboard administrativo, **removida ao final** — confirmado que restaram apenas `App.tsx` e `main.tsx` no diretório. Nenhum commit, branch ou push foi realizado.

@@ -1,0 +1,54 @@
+/*
+ * packages/ui/src/styles/index.css
+ * Folha de estilo base compartilhada pelos dois dashboards.
+ */
+
+/* Kit de componentes do projeto (botões, cards, tabelas, formulários). */
+@import '@tabler/core/dist/css/tabler.min.css';
+
+/*
+ * Tailwind entra apenas com o tema e os utilitários. O preflight é omitido de
+ * propósito: ele reescreveria os estilos base do Tabler, que é o kit oficial
+ * das duas interfaces.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/*
+ * ---------------------------------------------------------------------------
+ * Requisito explícito do projeto: interfaces sem animações.
+ *
+ * A regra abaixo é a rede de segurança que garante o requisito mesmo em
+ * componentes de terceiros. A garantia principal, porém, é de arquitetura: o
+ * JavaScript do Bootstrap/Tabler não é carregado e nenhum componente recebe as
+ * classes de transição do kit (`fade`, `collapsing`). Ver o README do pacote.
+ * ---------------------------------------------------------------------------
+ */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/*
+ * O que NÃO é animação e precisa ser preservado.
+ *
+ * "Sem animações" não significa "sem retorno visual": o indicador de foco é a
+ * reação correta que sustenta a operação por teclado, exigência de acessibilidade
+ * básica. A regra acima não o afeta — este bloco apenas o torna explícito e
+ * consistente entre os componentes.
+ */
+:focus-visible {
+  outline: 2px solid var(--tblr-primary, #0054a6);
+  outline-offset: 2px;
+}
+
+/*
+ * Superfície da aplicação. Definida aqui para que as duas interfaces partam do
+ * mesmo fundo, sem cada app repetir a declaração.
+ */
+body {
+  background-color: var(--tblr-body-bg, #f6f8fb);
+}

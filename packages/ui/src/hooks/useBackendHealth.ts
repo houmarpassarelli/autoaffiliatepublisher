@@ -1,5 +1,5 @@
-// apps/dashboard-admin/src/useBackendHealth.ts
-import { useEffect, useState } from 'react';
+// packages/ui/src/hooks/useBackendHealth.ts
+import { useCallback, useEffect, useState } from 'react';
 import { healthResponseSchema, type HealthResponse } from '@aap/shared';
 
 export type BackendHealthState =
@@ -7,13 +7,27 @@ export type BackendHealthState =
   | { phase: 'online'; health: HealthResponse }
   | { phase: 'offline'; reason: string };
 
+export interface UseBackendHealthResult {
+  state: BackendHealthState;
+  /** Nova tentativa sob demanda, sem recarregar a página. */
+  refresh: () => void;
+}
+
 /**
- * Consulta o estado da máquina administrativa na montagem da tela.
+ * Consulta o estado da máquina administrativa.
+ *
  * A resposta é validada pelo mesmo schema que o backend usa para serializá-la,
  * garantindo que uma divergência de contrato apareça aqui e não em produção.
  */
-export function useBackendHealth(): BackendHealthState {
+export function useBackendHealth(): UseBackendHealthResult {
   const [state, setState] = useState<BackendHealthState>({ phase: 'loading' });
+  // Alterar este contador reexecuta o efeito, que é como a nova tentativa acontece.
+  const [attempt, setAttempt] = useState(0);
+
+  const refresh = useCallback(() => {
+    setState({ phase: 'loading' });
+    setAttempt((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     // Cancela a atualização de estado se a tela for desmontada antes da resposta.
@@ -40,7 +54,7 @@ export function useBackendHealth(): BackendHealthState {
     void fetchHealth();
 
     return () => controller.abort();
-  }, []);
+  }, [attempt]);
 
-  return state;
+  return { state, refresh };
 }

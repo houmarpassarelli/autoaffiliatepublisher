@@ -59,3 +59,31 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 | Retrato de presença ao conectar | Não implementar | A carga inicial da tela-portão permanece a cargo de `GET /api/operators/available`, preservando o catálogo de eventos do `ESPECS_TECNICAS.md` |
 
 **Extensão de contrato aprovada:** o `ESPECS_TECNICAS.md`, Seção 3.2, descreve a resposta ao `OPERATOR_CLAIM` como "aceite ou `OPERATOR_IN_USE`", sem tipá-la. Serão acrescentadas ao contrato compartilhado as respostas ponto a ponto `OPERATOR_CLAIM_ACCEPTED` e `OPERATOR_CLAIM_REJECTED`, esta com motivo `OPERATOR_IN_USE` (constante preservada) ou `OPERATOR_UNAVAILABLE`. Também será acrescentado o schema Zod das mensagens de cliente, por serem entrada não confiável vinda do socket.
+
+---
+
+## 2026-09-09 — 03:38 — Interface com Tabler.io + Tailwind, sem animações
+
+**Contexto:** o Sprint 0 deixou o encanamento visual pronto — Tabler e Tailwind ligados, preflight omitido para não sobrescrever o kit, e a regra global que zera `animation` e `transition` —, mas as duas telas seguiam como cascas, sem componentes e sem os estados de retorno que o requisito "apenas as reações corretas" exige. Havia também duplicação byte a byte de `useBackendHealth.ts` e `styles/index.css` entre os dois dashboards.
+
+**Escopo aprovado:**
+
+1. Criação do workspace `packages/ui` (`@aap/ui`) com os componentes, o CSS base e os hooks de interface compartilhados pelos dois dashboards.
+2. Conjunto completo de componentes: `AppShell`, `PageHeader`, `Card`, `Modal`, `Button`, `Badge`, `DataTable`, `EmptyState`, `LoadingState`, `ErrorState`, `FormField` com seus campos, e `Alert`.
+3. Migração do `useBackendHealth` e do CSS base para o pacote, eliminando a duplicação.
+4. Aplicação do shell nos dois dashboards, com as três abas do dashboard remoto trocando por estado real.
+
+**Decisões técnicas registradas:**
+
+- **O JavaScript do Bootstrap/Tabler não será carregado.** Componentes interativos são implementados em React sobre as classes CSS do Tabler. Dois motivos: o JS do Bootstrap manipula o DOM por fora e conflita com o React; e ele coordena exibição por eventos `transitionend`, que a regra de "sem transições" torna imprevisíveis. O requisito deixa de ser apenas uma regra de CSS e passa a ser decisão de arquitetura de componente.
+- **`:focus-visible` é preservado.** "Sem animações" não pode significar "sem retorno visual" — o indicador de foco é a reação correta que sustenta a operação por teclado.
+- **Estado de carregamento sem spinner.** O spinner do Tabler depende de `animation`, que a regra global zera; um spinner congelado comunicaria a informação errada. O retorno de carregamento é dado por desabilitação do controle e mudança de rótulo.
+
+**Decisões do solicitante nesta sessão:**
+
+| Decisão | Escolha |
+| :--- | :--- |
+| Local dos componentes | Workspace compartilhado `packages/ui` |
+| Escopo de componentes | Completo, incluindo `Modal`, `DataTable` e `FormField`, que os CRUDs da Categoria 4 vão consumir |
+
+**Nota de validação:** o Firefox local não opera em modo headless enquanto a sessão do usuário está aberta. A conferência visual será tentada com um navegador headless instalado fora do repositório, preservando intocada a decisão em aberto entre Playwright e Puppeteer para o módulo de scraping.

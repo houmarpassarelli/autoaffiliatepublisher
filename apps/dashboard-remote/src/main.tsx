@@ -1,8 +1,8 @@
-// src/main.tsx
+// apps/dashboard-remote/src/main.tsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@aap/ui/styles.css';
 import { App } from './App.js';
-import './styles/index.css';
 
 // Ponto de montagem único da SPA.
 const container = document.getElementById('root');

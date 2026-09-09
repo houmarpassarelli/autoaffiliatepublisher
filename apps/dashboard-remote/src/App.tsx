@@ -1,67 +1,88 @@
 // apps/dashboard-remote/src/App.tsx
+import { useState } from 'react';
 import { OfferStatus } from '@aap/shared';
-import { useBackendHealth } from './useBackendHealth.js';
-
-// As três abas espelham a máquina de estados da oferta (FLUXO_OPERACIONAL.md, Seção 3).
-// DISCARDED não tem aba: a oferta descartada some da fila e alimenta o histórico
-// anti-recaptura.
-const OFFER_TABS = [
-  { status: OfferStatus.OPEN, label: 'Abertas' },
-  { status: OfferStatus.SCHEDULED, label: 'Agendadas' },
-  { status: OfferStatus.COMPLETED, label: 'Concluídas' },
-] as const;
+import {
+  AppShell,
+  Badge,
+  EmptyState,
+  PageHeader,
+  Tabs,
+  useBackendHealth,
+  type TabItem,
+} from '@aap/ui';
 
 /**
- * Casca do Dashboard Remoto.
- * Nesta etapa a tela apenas confirma que o monorepo está integrado: consome o
- * contrato de @aap/shared e verifica a saúde do backend. A curadoria em si —
- * tela-portão, cards e sincronização por WebSocket — é escopo do Sprint 3.
+ * As três abas espelham a máquina de estados da oferta
+ * (FLUXO_OPERACIONAL.md, Seção 3). O estado DISCARDED não tem aba: a oferta
+ * descartada some da fila e passa a alimentar o histórico anti-recaptura.
  */
-export function App(): React.JSX.Element {
-  const health = useBackendHealth();
+type OfferTabId = OfferStatus.OPEN | OfferStatus.SCHEDULED | OfferStatus.COMPLETED;
+
+const OFFER_TABS: TabItem<OfferTabId>[] = [
+  { id: OfferStatus.OPEN, label: 'Abertas', count: 0 },
+  { id: OfferStatus.SCHEDULED, label: 'Agendadas', count: 0 },
+  { id: OfferStatus.COMPLETED, label: 'Concluídas', count: 0 },
+];
+
+/** Texto de ausência de cada aba: o motivo de estar vazia muda conforme o estado. */
+const EMPTY_BY_TAB: Record<OfferTabId, { title: string; description: string }> = {
+  [OfferStatus.OPEN]: {
+    title: 'Nenhuma oferta aguardando decisão',
+    description:
+      'Ofertas capturadas pelas fontes de coleta aparecem aqui no topo, em tempo real, sem recarregar a página.',
+  },
+  [OfferStatus.SCHEDULED]: {
+    title: 'Nenhuma oferta na fila de disparo',
+    description:
+      'Ofertas aprovadas com a fila ocupada aguardam aqui o intervalo anti-spam, exibindo a contagem regressiva.',
+  },
+  [OfferStatus.COMPLETED]: {
+    title: 'Nenhuma oferta publicada ainda',
+    description: 'O histórico de disparos confirmados aparece nesta aba.',
+  },
+};
+
+/** Indicador de conexão com a máquina administrativa, exibido na barra superior. */
+function ConnectionBadge(): React.JSX.Element {
+  const { state } = useBackendHealth();
+
+  if (state.phase === 'loading') {
+    return <Badge tone="neutral">Conectando…</Badge>;
+  }
+
+  if (state.phase === 'offline') {
+    return <Badge tone="danger">Sem conexão</Badge>;
+  }
 
   return (
-    <div className="page">
-      <header className="navbar navbar-expand-md d-print-none">
-        <div className="container-xl">
-          <h1 className="navbar-brand mb-0 fs-3">Auto Affiliate Publisher</h1>
-          <span className="badge bg-purple-lt ms-2">Curadoria</span>
+    <Badge tone={state.health.status === 'ok' ? 'success' : 'warning'}>
+      {state.health.status === 'ok' ? 'Conectado' : 'Conexão degradada'}
+    </Badge>
+  );
+}
+
+/** Dashboard Remoto: curadoria e disparo das ofertas coletadas. */
+export function App(): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<OfferTabId>(OfferStatus.OPEN);
+  const empty = EMPTY_BY_TAB[activeTab];
+
+  return (
+    <AppShell label="Curadoria" tone="remote" toolbar={<ConnectionBadge />}>
+      <PageHeader
+        title="Fila de ofertas"
+        subtitle="Revise a oferta, escolha os canais e publique. Cada decisão remove o item da fila de todos os operadores."
+      />
+
+      <Tabs
+        items={OFFER_TABS}
+        activeId={activeTab}
+        onChange={setActiveTab}
+        label="Ciclo de vida da oferta"
+      >
+        <div className="card-body">
+          <EmptyState title={empty.title} description={empty.description} />
         </div>
-      </header>
-
-      <div className="page-body">
-        <div className="container-xl">
-          <div className="card mb-3">
-            <div className="card-body">
-              <h2 className="card-title">Estado do backend</h2>
-              {health.phase === 'loading' && <p className="text-secondary">Verificando…</p>}
-              {health.phase === 'offline' && (
-                <p className="text-danger">Backend indisponível: {health.reason}</p>
-              )}
-              {health.phase === 'online' && (
-                <p className="mb-0">
-                  Status: <strong>{health.health.status}</strong>
-                </p>
-              )}
-            </div>
-          </div>
-
-          <ul className="nav nav-tabs" role="tablist">
-            {OFFER_TABS.map((tab, index) => (
-              <li className="nav-item" key={tab.status}>
-                <span className={`nav-link${index === 0 ? ' active' : ''}`}>{tab.label}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="card border-top-0 rounded-top-0">
-            <div className="card-body text-secondary">
-              A fila de ofertas será renderizada aqui, em ordem decrescente de data de resgate, com
-              inserção no topo em tempo real.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </Tabs>
+    </AppShell>
   );
 }

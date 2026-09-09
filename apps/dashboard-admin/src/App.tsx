@@ -1,69 +1,126 @@
 // apps/dashboard-admin/src/App.tsx
-import { useBackendHealth } from './useBackendHealth.js';
+import {
+  Alert,
+  AppShell,
+  Badge,
+  Button,
+  Card,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+  useBackendHealth,
+} from '@aap/ui';
 
-// Módulos do Dashboard Administrativo previstos no CHECKLIST.md, Categoria 4.
-// Cada item vira uma rota própria à medida que o respectivo CRUD é implementado.
+/**
+ * Módulos do Dashboard Administrativo previstos no CHECKLIST.md, Categoria 4.
+ * Cada item vira uma tela própria à medida que o respectivo CRUD é implementado.
+ */
 const ADMIN_MODULES = [
-  { title: 'Fontes de Coleta', description: 'Tipo, URL, credenciais, varredura e prompt da IA.' },
-  { title: 'Canais de Destino', description: 'Cadastro dinâmico, modo de execução e credenciais.' },
-  { title: 'Operadores', description: 'Nome obrigatório, e-mail opcional, sem senha ou token.' },
-  { title: 'Auditoria de Disparos', description: 'Filtros por data, operador, loja e canal.' },
+  {
+    title: 'Fontes de Coleta',
+    description: 'Tipo, URL, credenciais, intervalo de varredura e prompt da IA por fonte.',
+  },
+  {
+    title: 'Canais de Destino',
+    description: 'Cadastro dinâmico, modo de execução e credenciais de envio.',
+  },
+  {
+    title: 'Operadores',
+    description: 'Nome obrigatório, e-mail opcional, sem senha ou token.',
+  },
+  {
+    title: 'Auditoria de Disparos',
+    description: 'Filtros por data, operador, loja de origem e canal de destino.',
+  },
 ] as const;
 
 /**
- * Casca do Dashboard Administrativo.
- * Nesta etapa a tela apenas confirma que o monorepo está integrado: consome o
- * contrato de @aap/shared e verifica a saúde do backend na máquina administrativa.
+ * Estado do backend na máquina administrativa.
+ * É a primeira informação do painel porque, sem MongoDB e Redis de pé, nenhuma
+ * das demais telas tem o que fazer.
  */
-export function App(): React.JSX.Element {
-  const health = useBackendHealth();
+function BackendHealthCard(): React.JSX.Element {
+  const { state, refresh } = useBackendHealth();
 
   return (
-    <div className="page">
-      <header className="navbar navbar-expand-md d-print-none">
-        <div className="container-xl">
-          <h1 className="navbar-brand mb-0 fs-3">Auto Affiliate Publisher</h1>
-          <span className="badge bg-blue-lt ms-2">Administrativo</span>
-        </div>
-      </header>
+    <Card
+      title="Máquina administrativa"
+      actions={
+        <Button variant="secondary" onClick={refresh} loading={state.phase === 'loading'}>
+          Verificar
+        </Button>
+      }
+    >
+      {state.phase === 'loading' ? <LoadingState subject="o estado do backend" /> : null}
 
-      <div className="page-body">
-        <div className="container-xl">
-          <div className="card mb-3">
-            <div className="card-body">
-              <h2 className="card-title">Estado do backend</h2>
-              {health.phase === 'loading' && <p className="text-secondary">Verificando…</p>}
-              {health.phase === 'offline' && (
-                <p className="text-danger">Backend indisponível: {health.reason}</p>
-              )}
-              {health.phase === 'online' && (
-                <ul className="list-unstyled mb-0">
-                  <li>
-                    Status: <strong>{health.health.status}</strong>
-                  </li>
-                  <li>
-                    MongoDB: {health.health.dependencies.mongodb ? 'conectado' : 'indisponível'}
-                  </li>
-                  <li>Redis: {health.health.dependencies.redis ? 'conectado' : 'indisponível'}</li>
-                </ul>
-              )}
-            </div>
+      {state.phase === 'offline' ? (
+        <ErrorState
+          title="Backend indisponível"
+          message={state.reason}
+          onRetry={refresh}
+        />
+      ) : null}
+
+      {state.phase === 'online' ? (
+        <div className="d-flex flex-column gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary">Servidor</span>
+            <Badge tone={state.health.status === 'ok' ? 'success' : 'warning'}>
+              {state.health.status === 'ok' ? 'Operacional' : 'Degradado'}
+            </Badge>
           </div>
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary">MongoDB</span>
+            <Badge tone={state.health.dependencies.mongodb ? 'success' : 'danger'}>
+              {state.health.dependencies.mongodb ? 'Conectado' : 'Indisponível'}
+            </Badge>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary">Redis</span>
+            <Badge tone={state.health.dependencies.redis ? 'success' : 'danger'}>
+              {state.health.dependencies.redis ? 'Conectado' : 'Indisponível'}
+            </Badge>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
 
+/** Dashboard Administrativo: configuração, credenciais e auditoria. */
+export function App(): React.JSX.Element {
+  return (
+    <AppShell label="Administrativo" tone="admin">
+      <PageHeader
+        title="Painel administrativo"
+        subtitle="Configuração de fontes, canais, operadores e consulta da auditoria de disparos."
+      />
+
+      <Alert tone="info" title="Ambiente local">
+        Este painel concentra as credenciais de API e os tokens de canal, que por decisão
+        arquitetural nunca saem desta máquina.
+      </Alert>
+
+      <div className="row row-cards">
+        <div className="col-12 col-lg-5">
+          <BackendHealthCard />
+        </div>
+
+        <div className="col-12 col-lg-7">
           <div className="row row-cards">
-            {ADMIN_MODULES.map((module) => (
-              <div className="col-md-6" key={module.title}>
-                <div className="card mb-3">
-                  <div className="card-body">
-                    <h3 className="card-title">{module.title}</h3>
-                    <p className="text-secondary mb-0">{module.description}</p>
-                  </div>
-                </div>
+            {ADMIN_MODULES.map((adminModule) => (
+              <div className="col-12 col-md-6" key={adminModule.title}>
+                <Card
+                  title={adminModule.title}
+                  actions={<Badge tone="warning">Pendente</Badge>}
+                >
+                  <p className="text-secondary mb-0">{adminModule.description}</p>
+                </Card>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

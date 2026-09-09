@@ -2,7 +2,7 @@
 
 Este documento compila o status completo de desenvolvimento do projeto **Auto Affiliate Publisher**, categorizado por **Fluxos de Execução**. Cada item possui sua própria caixa de seleção (`- [x]` Implementado no Código, `- [ ]` Pendente, `- [X]` Removido/Substituído) e aponta para o documento de especificação (`.md`) correspondente.
 
-**Estado atual:** monorepo estruturado (Sprint 0 concluído em 08/09/2026) e camada de tempo real no ar (Demanda 2.2 concluída em 09/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, expõe a rota `GET /ws` com broadcast e presença ativa, e os dois dashboards já consomem o contrato compartilhado. Os fluxos de ingestão, IA, publicação e curadoria seguem pendentes.
+**Estado atual:** monorepo estruturado (Sprint 0, 08/09/2026), camada de tempo real no ar (Demanda 2.2, 09/09/2026) e kit de interface compartilhado (`@aap/ui`, 09/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, e expõe a rota `GET /ws` com broadcast e presença ativa; os dois dashboards já têm casca navegável sobre o kit. Os fluxos de ingestão, IA, publicação e os CRUDs seguem pendentes.
 
 ## Sumário
 
@@ -100,7 +100,10 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 4. 🖥️ Fluxo do Dashboard Administrativo (Local)
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Interface com Tabler.io + Tailwind, sem animações** (*kit compartilhado `@aap/ui` com layout, superfícies, ações, tabela, campos de formulário, abas e os três estados de retorno; o JavaScript do Bootstrap não é carregado e os componentes interativos são React puro*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#7-frontend-dos-dashboards) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026)*
+- [x] **Casca das Duas Interfaces sobre o Kit** (*painel administrativo com estado da máquina e os módulos previstos; painel remoto com as três abas do ciclo de vida trocando por estado real*)
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#8-estrutura-de-diretórios-monorepo))*
 
 ### Pendentes
 - [ ] **CRUD de Fontes de Coleta** (*nome, tipo, URL, chaves de API, intervalo de varredura e prompt customizado da IA*) — **Demanda 1.2 e 3.1, Sprints 1 e 3**
@@ -113,8 +116,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#8-rastreamento-de-ações-e-auditoria))*
 - [ ] **Disparo Manual de Varredura por Fonte** (*rota `POST /api/sources/:id/run` para testar uma fonte sem esperar o cron*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#9-rotas-http-principais-fastify--zod))*
-- [ ] **Interface com Tabler.io + Tailwind, sem animações** (*requisito explícito do usuário: apenas as reações corretas*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#7-frontend-dos-dashboards))*
 
 ---
 
