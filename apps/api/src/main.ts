@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
 import { ensureIndexes } from './database/models/index.js';
+import { resetPresence, shutdownWebsocketModule } from './modules/websocket/index.js';
 import { buildApp } from './server/app.js';
 
 /**
@@ -18,7 +19,18 @@ async function bootstrap(): Promise<void> {
   await ensureIndexes();
   await connectRedis();
 
+  // Presenças remanescentes de uma execução anterior não têm socket vivo por trás:
+  // são zeradas antes de qualquer operador conseguir se conectar.
+  const releasedPresences = await resetPresence();
+
   const app = await buildApp();
+
+  if (releasedPresences > 0) {
+    app.log.warn(
+      { releasedPresences },
+      'Presenças órfãs de execução anterior liberadas no bootstrap.',
+    );
+  }
 
   registerShutdownHandlers(app);
 
@@ -39,6 +51,7 @@ function registerShutdownHandlers(app: FastifyInstance): void {
         app.log.info(`Sinal ${signal} recebido. Encerrando a aplicação.`);
 
         try {
+          shutdownWebsocketModule();
           await app.close();
           await disconnectRedis();
           await disconnectDatabase();

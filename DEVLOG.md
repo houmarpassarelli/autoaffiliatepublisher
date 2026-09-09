@@ -69,3 +69,69 @@ Ambos em Vite 8 + React 19 + TypeScript, com Tabler.io como kit de componentes e
 - Criptografia em repouso de `sources.credentials` e `channels.credentials`: os models já isolam o ponto onde ela será aplicada, sem alteração de contrato.
 - Servidor WebSocket: apenas o contrato tipado foi criado. A implementação do broadcast é Sprint 2.
 - Nenhum commit, branch ou push foi realizado, conforme a restrição do `INSTRUCAO_EXECUCAO.md`, Seção 1.
+
+---
+
+## 2026-09-09 — Demanda 2.2: Servidor WebSocket no Fastify com Broadcast
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 09/09/2026.
+
+### 1. Extensão do contrato compartilhado
+
+`packages/shared/src/contracts/websocketContracts.ts`:
+
+- **`clientMessageSchema`** (Zod, união discriminada por `type`). As mensagens do cliente eram apenas tipos TypeScript, o que não protege nada em tempo de execução: o que chega pelo socket é entrada não confiável e passa a ser validada antes de tocar o registro de presença.
+- **Respostas ponto a ponto ao `OPERATOR_CLAIM`**: `OPERATOR_CLAIM_ACCEPTED` e `OPERATOR_CLAIM_REJECTED`, esta com motivo `OPERATOR_IN_USE` — a constante já existente, preservada — ou `OPERATOR_UNAVAILABLE`, para operador inexistente ou inativo. O `ESPECS_TECNICAS.md` descrevia essa resposta como "aceite ou `OPERATOR_IN_USE`" sem tipá-la.
+- **`ServerOutboundMessage`**, união do que trafega do servidor ao cliente: evento de broadcast ou resposta direta.
+
+### 2. Módulo `apps/api/src/modules/websocket`
+
+| Arquivo | Conteúdo |
+| :--- | :--- |
+| `connectionRegistry.ts` | Registro em memória das conexões vivas e do vínculo socket ↔ operador. |
+| `broadcaster.ts` | Envio a um socket ou a todos os abertos, descartando os que já morreram. |
+| `broadcastEvents.ts` | Os seis emissores tipados de evento de estado. |
+| `presenceService.ts` | Reivindicação, liberação, heartbeat e reset de presença. |
+| `presenceReaper.ts` | Varredura periódica das conexões silenciosas. |
+| `websocketRoutes.ts` | Rota `GET /ws` e ciclo de vida da conexão. |
+| `index.ts` | Registro do módulo no Fastify e encerramento no desligamento. |
+
+**Delimitação honesta do escopo:** quatro dos seis eventos (`OFFER_CREATED`, `OFFER_STATE_CHANGED`, `OFFER_PUBLISHED` e `CHANNELS_UPDATED`) nascem em módulos que ainda não existem — ingestão, rota de disparo, worker da fila e CRUD de canais. Foram entregues como **emissores tipados prontos para serem chamados**, e não como gatilhos simulados. Os dois eventos de presença funcionam de ponta a ponta, porque sua origem é o próprio socket.
+
+### 3. Decisões de implementação
+
+- **A disputa pelo nome do operador é resolvida em memória, não no banco.** A verificação seguida da escrita acontece no mesmo tick do event loop, o que a torna atômica por construção num backend monothread de processo único — a arquitetura homologada. Registrado no README do módulo que, se o backend passar a rodar em múltiplos processos, esta trava precisa migrar para o Redis.
+- **`isOnline` em banco é projeção, não verdade.** A verdade é o socket vivo; o campo existe para que a tela-portão possa ser carregada por HTTP antes de qualquer conexão.
+- **Mensagem inválida não derruba a conexão.** É descartada com log — um cliente desatualizado não deve tirar o operador do ar.
+- **Ordem no varredor**: libera a presença antes de encerrar o socket, para que o broadcast de desconexão saia mesmo que o `terminate` falhe.
+- **Contrato com o cliente**: o heartbeat deve começar assim que o socket abre, não apenas após a reivindicação. Conexões anônimas silenciosas também são varridas.
+
+### 4. Duas salvaguardas contra presença travada
+
+O `ESPECS_TECNICAS.md`, Seção 3.2, registra o risco de `isOnline: true` órfão. Ele tem duas causas distintas, e cada uma recebeu tratamento próprio:
+
+- **Queda de rede sem `close` limpo** → varredor de heartbeat, com janela em `WEBSOCKET_HEARTBEAT_TIMEOUT_MS` (padrão 90s) e varredura a cada terço dela.
+- **Morte abrupta do processo** → `resetPresence()` no bootstrap, antes que qualquer operador consiga se conectar. Sem isto, um `kill -9` deixaria nomes travados como "Em uso" para sempre, sem ninguém conectado para liberá-los.
+
+### 5. Integração
+
+- `config/env.ts` e `.env.example`: nova variável `WEBSOCKET_HEARTBEAT_TIMEOUT_MS`.
+- `server/app.ts`: registro do plugin e da rota.
+- `main.ts`: reset de presença no bootstrap e encerramento dos sockets com código 1001 (parada planejada) no desligamento gracioso, para que os clientes distingam isso de uma queda.
+- Acrescentado `@types/ws` como dependência de desenvolvimento — os tipos do `@fastify/websocket` derivam dos tipos do `ws`.
+
+### 6. Validações executadas
+
+`typecheck`, `lint` e `build` limpos nos quatro workspaces. Com o backend de pé e dois clientes WebSocket simultâneos:
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Reivindicação de identidade | `OPERATOR_CLAIM_ACCEPTED` ao solicitante e `OPERATOR_CONNECTED` em broadcast aos dois |
+| Segunda reivindicação do mesmo operador | `OPERATOR_CLAIM_REJECTED` com `OPERATOR_IN_USE` |
+| Reivindicação de operador inexistente | `OPERATOR_CLAIM_REJECTED` com `OPERATOR_UNAVAILABLE` |
+| JSON inválido, tipo desconhecido e `operatorId` malformado | Descartados; socket permaneceu aberto |
+| Desconexão limpa | `OPERATOR_DISCONNECTED` em broadcast e `isOnline: false` conferido em banco |
+| Conexão que para de enviar heartbeat | Encerrada pelo servidor dentro da janela, com a presença liberada |
+| Presença órfã antes do bootstrap | `releasedPresences: 1` no log e `isOnline: false` em banco |
+
+Os operadores criados para o teste foram removidos do banco e os scripts de verificação, descartados. Nenhum commit, branch ou push foi realizado.

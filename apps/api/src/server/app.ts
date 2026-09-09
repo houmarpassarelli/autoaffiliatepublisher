@@ -8,6 +8,7 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { env, isProduction } from '../config/env.js';
+import { registerWebsocketModule } from '../modules/websocket/index.js';
 import { healthRoutes } from './routes/healthRoutes.js';
 
 /**
@@ -55,6 +56,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(healthRoutes);
+
+  // Camada de tempo real: rota /ws, broadcast de estado global e presença ativa.
+  await registerWebsocketModule(app);
 
   return app;
 }

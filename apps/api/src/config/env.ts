@@ -34,6 +34,11 @@ const envSchema = z.object({
   // Parâmetro de balanceamento, não constante fixa: o valor operacional definitivo
   // é decisão em aberto (CHECKLIST.md, Categoria 8).
   DISPATCH_INTERVAL_MS: z.coerce.number().int().nonnegative().default(180_000),
+
+  // Janela de tolerância do heartbeat do WebSocket, em milissegundos.
+  // Conexões silenciosas por mais tempo que isto são encerradas e têm a presença
+  // do operador liberada, evitando nomes travados como "Em uso".
+  WEBSOCKET_HEARTBEAT_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
 });
 
 export type Env = z.infer<typeof envSchema>;

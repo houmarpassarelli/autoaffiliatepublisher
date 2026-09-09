@@ -1,4 +1,6 @@
 // packages/shared/src/contracts/websocketContracts.ts
+import { z } from 'zod';
+import { objectIdSchema } from '../schemas/commonSchemas.js';
 import type { ChannelDto } from '../schemas/channelSchemas.js';
 import type { DeliveryStatus } from '../schemas/dispatchLogSchemas.js';
 import type { OfferDto } from '../schemas/offerSchemas.js';
@@ -90,5 +92,55 @@ export interface HeartbeatMessage {
 
 export type ClientMessage = OperatorClaimMessage | HeartbeatMessage;
 
+/**
+ * Validação em tempo de execução das mensagens recebidas pelo socket.
+ * Diferente dos eventos de servidor, que a própria aplicação produz, o que chega
+ * do cliente é entrada não confiável e precisa ser validada antes de tocar o
+ * registro de presença.
+ */
+export const clientMessageSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal(ClientMessageType.OPERATOR_CLAIM),
+    operatorId: objectIdSchema,
+  }),
+  z.object({
+    type: z.literal(ClientMessageType.HEARTBEAT),
+  }),
+]);
+
 /** Recusa da reivindicação: o nome já está em uso por outro operador conectado. */
 export const OPERATOR_IN_USE = 'OPERATOR_IN_USE' as const;
+
+/** Recusa da reivindicação: o operador não existe ou está desativado no cadastro. */
+export const OPERATOR_UNAVAILABLE = 'OPERATOR_UNAVAILABLE' as const;
+
+export type OperatorClaimRejectionReason = typeof OPERATOR_IN_USE | typeof OPERATOR_UNAVAILABLE;
+
+/**
+ * Respostas ponto a ponto ao `OPERATOR_CLAIM` — enviadas apenas ao socket que
+ * reivindicou a identidade, nunca em broadcast. O ESPECS_TECNICAS.md descreve
+ * esta resposta como "aceite ou OPERATOR_IN_USE"; aqui ela ganha forma tipada.
+ */
+export enum ServerReplyType {
+  OPERATOR_CLAIM_ACCEPTED = 'OPERATOR_CLAIM_ACCEPTED',
+  OPERATOR_CLAIM_REJECTED = 'OPERATOR_CLAIM_REJECTED',
+}
+
+/** Identidade concedida: a partir daqui o socket representa aquele operador. */
+export interface OperatorClaimAcceptedReply {
+  reply: ServerReplyType.OPERATOR_CLAIM_ACCEPTED;
+  operatorId: string;
+  name: string;
+}
+
+/** Identidade negada: a tela-portão deve manter o operador na seleção. */
+export interface OperatorClaimRejectedReply {
+  reply: ServerReplyType.OPERATOR_CLAIM_REJECTED;
+  operatorId: string;
+  reason: OperatorClaimRejectionReason;
+}
+
+export type ServerReply = OperatorClaimAcceptedReply | OperatorClaimRejectedReply;
+
+/** Mensagem trafegada do servidor para o cliente: broadcast de estado ou resposta direta. */
+export type ServerOutboundMessage = ServerEvent | ServerReply;

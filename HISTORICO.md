@@ -35,3 +35,27 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 **Divergência registrada:** o `ARQUITETURA.md`, Seção 8, descreve uma estrutura de projeto único (`src/...`), incompatível com a exigência de monorepo. O mapeamento adotado preserva integralmente os nomes e as fronteiras dos módulos. A atualização daquele documento pertence ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`) e **não foi realizada nesta sessão de execução**.
 
 **Observação de processo:** a skill `gauntlet-loop`, exigida pelo `INSTRUCAO_EXECUCAO.md`, Seção 3.5, não existe no repositório (`.claude/skills/` ausente). A sessão seguiu sem ela.
+
+---
+
+## 2026-09-09 — 02:30 — Demanda 2.2: Servidor WebSocket no Fastify com Broadcast
+
+**Contexto:** com o monorepo estruturado e os models aplicados, a próxima demanda do Sprint 2 é a camada de tempo real — o mecanismo que sustenta o estado global único do `GERAL.md`, Seção 3. Os contratos dos seis eventos de broadcast e das duas mensagens de cliente já estavam tipados em `@aap/shared` desde o Sprint 0; falta a implementação sobre `@fastify/websocket`.
+
+**Escopo aprovado:**
+
+1. Infraestrutura de transporte: registro de conexões vivas, broadcaster e os seis emissores tipados de evento.
+2. Controle de presença ativa de ponta a ponta: `OPERATOR_CLAIM`, `OPERATOR_CONNECTED` e `OPERATOR_DISCONNECTED`, com persistência de `isOnline` e `lastSeenAt`.
+3. Reconciliação de presença órfã por expiração de heartbeat (item da Categoria 8, incorporado a esta task por decisão do solicitante).
+4. Rota `GET /ws` e validação em tempo de execução das mensagens recebidas do cliente.
+
+**Delimitação registrada:** os eventos `OFFER_CREATED`, `OFFER_STATE_CHANGED`, `OFFER_PUBLISHED` e `CHANNELS_UPDATED` nascem em módulos que ainda não existem (ingestão, rota de disparo, worker da fila e CRUD de canais). Esta task entrega os **emissores tipados prontos para serem chamados** por esses módulos, e não gatilhos simulados. Apenas os dois eventos de presença ficam funcionando de ponta a ponta, porque sua origem é o próprio socket.
+
+**Decisões do solicitante nesta sessão:**
+
+| Decisão | Escolha | Efeito no `CHECKLIST.md` |
+| :--- | :--- | :--- |
+| Reconciliação de presença órfã | Incluída nesta task | Encerra o item "Implementar reconciliação de presença órfã" (Categoria 8) |
+| Retrato de presença ao conectar | Não implementar | A carga inicial da tela-portão permanece a cargo de `GET /api/operators/available`, preservando o catálogo de eventos do `ESPECS_TECNICAS.md` |
+
+**Extensão de contrato aprovada:** o `ESPECS_TECNICAS.md`, Seção 3.2, descreve a resposta ao `OPERATOR_CLAIM` como "aceite ou `OPERATOR_IN_USE`", sem tipá-la. Serão acrescentadas ao contrato compartilhado as respostas ponto a ponto `OPERATOR_CLAIM_ACCEPTED` e `OPERATOR_CLAIM_REJECTED`, esta com motivo `OPERATOR_IN_USE` (constante preservada) ou `OPERATOR_UNAVAILABLE`. Também será acrescentado o schema Zod das mensagens de cliente, por serem entrada não confiável vinda do socket.

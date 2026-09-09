@@ -2,7 +2,7 @@
 
 Este documento compila o status completo de desenvolvimento do projeto **Auto Affiliate Publisher**, categorizado por **Fluxos de Execução**. Cada item possui sua própria caixa de seleção (`- [x]` Implementado no Código, `- [ ]` Pendente, `- [X]` Removido/Substituído) e aponta para o documento de especificação (`.md`) correspondente.
 
-**Estado atual:** monorepo estruturado (Sprint 0 concluído em 08/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, e os dois dashboards já consomem o contrato compartilhado. Os fluxos de ingestão, IA, publicação e curadoria seguem pendentes.
+**Estado atual:** monorepo estruturado (Sprint 0 concluído em 08/09/2026) e camada de tempo real no ar (Demanda 2.2 concluída em 09/09/2026). O backend sobe conectado a MongoDB e Redis, com os cinco models e os índices obrigatórios aplicados, expõe a rota `GET /ws` com broadcast e presença ativa, e os dois dashboards já consomem o contrato compartilhado. Os fluxos de ingestão, IA, publicação e curadoria seguem pendentes.
 
 ## Sumário
 
@@ -81,12 +81,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#24-coleção-channels--canais-de-destino))*
 - [x] **Model `dispatch_logs`** (*auditoria imutável com assinatura desnormalizada do operador, `productSku` e preço congelado no disparo*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
+- [x] **Servidor WebSocket no Fastify com Broadcast** (*rota `GET /ws` sobre `@fastify/websocket`; os seis eventos disponíveis como emissores tipados, com `OPERATOR_CONNECTED` e `OPERATOR_DISCONNECTED` funcionando de ponta a ponta — os outros quatro aguardam os módulos que os disparam*) — **Demanda 2.2, Sprint 2**
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026)*
+- [x] **Controle de Presença Ativa e Validação das Mensagens do Cliente** (*`OPERATOR_CLAIM` com resposta tipada de aceite ou recusa, `HEARTBEAT`, e validação em tempo de execução de tudo que chega pelo socket*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#32-mensagens-enviadas-pelo-cliente))*
 - [x] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}` e `{operatorId,resolvedAt:-1}` aplicados por `ensureIndexes()` no bootstrap e conferidos no banco*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ### Pendentes
-- [ ] **Servidor WebSocket no Fastify com Broadcast** (*eventos `OFFER_CREATED`, `OFFER_STATE_CHANGED`, `OFFER_PUBLISHED`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED`, `CHANNELS_UPDATED` — contratos já tipados em `@aap/shared`; implementação sobre `@fastify/websocket`*) — **Demanda 2.2, Sprint 2**
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
 - [ ] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` — método a definir*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Migrar a imagem do MongoDB para a linha 8.x** (*fixada em `mongo:7` no `docker-compose.yml`: as imagens 8.x recusam iniciar nesta máquina com "Linux kernel versions 6.19 and newer has a known incompatibility" — SERVER-121912*)
@@ -125,7 +127,7 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Pendentes
 - [ ] **Tela-Portão de Seleção de Operador** (*lista de nomes cadastrados; nomes em uso ficam desabilitados com a marcação "Em uso"*) — **Demanda 3.2, Sprint 3**
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#72-tela-portão-de-seleção-dashboard-remoto))*
-- [ ] **Controle de Presença Ativa via WebSocket** (*`OPERATOR_CLAIM`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED` — libera o nome na desconexão*)
+- [ ] **Controle de Presença Ativa via WebSocket** (*`OPERATOR_CLAIM`, `OPERATOR_CONNECTED`, `OPERATOR_DISCONNECTED` — libera o nome na desconexão. **Lado servidor concluído em 09/09/2026**; resta o consumo no dashboard remoto, incluindo o envio de `HEARTBEAT` desde a abertura do socket*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#73-controle-de-presença-ativa))*
 - [ ] **Estrutura de 3 Abas** (*Abertas, Agendadas e Concluídas, espelhando a máquina de estados da oferta*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#3-sistema-de-abas-do-dashboard-remoto))*
@@ -209,14 +211,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#33-escolha-do-provedor))*
 - [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
-- [ ] **Implementar reconciliação de presença órfã** (*heartbeat com expiração para socket caído sem `close` limpo, evitando `isOnline: true` travado*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#32-mensagens-enviadas-pelo-cliente))*
 - [ ] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 - [ ] **Avaliar adoção de sub-ID por operador nos links de afiliado** (*transforma a atribuição de comissão de inferida em medida — ver limitações do cruzamento por SKU*)
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 
 ### Concluídas
+- [x] **Reconciliação de presença órfã implementada** (*duas salvaguardas: varredor de heartbeat com janela em `WEBSOCKET_HEARTBEAT_TIMEOUT_MS` para queda de rede sem `close` limpo, e reset de presenças no bootstrap para morte abrupta do processo*)
+  *(Implementado em 09/09/2026 — ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md))*
 - [x] **Escolha da biblioteca de WebSocket: `@fastify/websocket`** (*plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio — suficiente para os 6 eventos de broadcast e o controle de presença*)
   *(Decidido em 08/09/2026 — ver [HISTORICO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/HISTORICO.md))*
 - [x] **Escolha da camada de acesso ao MongoDB: Mongoose** (*schemas declarativos com os índices junto do model; a transição atômica por `findOneAndUpdate` permanece disponível*)
