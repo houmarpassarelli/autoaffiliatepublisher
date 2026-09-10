@@ -1,4 +1,5 @@
 // apps/dashboard-admin/src/App.tsx
+import { useState } from 'react';
 import {
   Alert,
   AppShell,
@@ -8,31 +9,23 @@ import {
   ErrorState,
   LoadingState,
   PageHeader,
+  Tabs,
   useBackendHealth,
+  type TabItem,
 } from '@aap/ui';
+import { ChannelsScreen } from './screens/ChannelsScreen.js';
+import { OperatorsScreen } from './screens/OperatorsScreen.js';
+import { SourcesScreen } from './screens/SourcesScreen.js';
 
-/**
- * Módulos do Dashboard Administrativo previstos no CHECKLIST.md, Categoria 4.
- * Cada item vira uma tela própria à medida que o respectivo CRUD é implementado.
- */
-const ADMIN_MODULES = [
-  {
-    title: 'Fontes de Coleta',
-    description: 'Tipo, URL, credenciais, intervalo de varredura e prompt da IA por fonte.',
-  },
-  {
-    title: 'Canais de Destino',
-    description: 'Cadastro dinâmico, modo de execução e credenciais de envio.',
-  },
-  {
-    title: 'Operadores',
-    description: 'Nome obrigatório, e-mail opcional, sem senha ou token.',
-  },
-  {
-    title: 'Auditoria de Disparos',
-    description: 'Filtros por data, operador, loja de origem e canal de destino.',
-  },
-] as const;
+/** Seções do painel administrativo. */
+type AdminSectionId = 'overview' | 'sources' | 'channels' | 'operators';
+
+const ADMIN_SECTIONS: TabItem<AdminSectionId>[] = [
+  { id: 'overview', label: 'Visão geral' },
+  { id: 'sources', label: 'Fontes de Coleta' },
+  { id: 'channels', label: 'Canais de Destino' },
+  { id: 'operators', label: 'Operadores' },
+];
 
 /**
  * Estado do backend na máquina administrativa.
@@ -54,11 +47,7 @@ function BackendHealthCard(): React.JSX.Element {
       {state.phase === 'loading' ? <LoadingState subject="o estado do backend" /> : null}
 
       {state.phase === 'offline' ? (
-        <ErrorState
-          title="Backend indisponível"
-          message={state.reason}
-          onRetry={refresh}
-        />
+        <ErrorState title="Backend indisponível" message={state.reason} onRetry={refresh} />
       ) : null}
 
       {state.phase === 'online' ? (
@@ -87,8 +76,36 @@ function BackendHealthCard(): React.JSX.Element {
   );
 }
 
+/**
+ * Visão geral: saúde da máquina e o que ainda falta construir no painel.
+ *
+ * Os módulos já entregues deixaram de ser listados aqui — eles têm aba própria.
+ * O que resta é o mapa honesto do que continua pendente.
+ */
+function OverviewSection(): React.JSX.Element {
+  return (
+    <div className="row row-cards">
+      <div className="col-12 col-lg-5">
+        <BackendHealthCard />
+      </div>
+
+      <div className="col-12 col-lg-7">
+        <Card title="Auditoria de Disparos" actions={<Badge tone="warning">Pendente</Badge>}>
+          <p className="text-secondary mb-0">
+            Tabela de logs de disparo com filtros por data, operador, loja de origem e canal de
+            destino. Os registros já estão sendo gravados a cada publicação — falta a tela de
+            consulta.
+          </p>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 /** Dashboard Administrativo: configuração, credenciais e auditoria. */
 export function App(): React.JSX.Element {
+  const [section, setSection] = useState<AdminSectionId>('overview');
+
   return (
     <AppShell label="Administrativo" tone="admin">
       <PageHeader
@@ -101,26 +118,19 @@ export function App(): React.JSX.Element {
         arquitetural nunca saem desta máquina.
       </Alert>
 
-      <div className="row row-cards">
-        <div className="col-12 col-lg-5">
-          <BackendHealthCard />
+      <Tabs
+        items={ADMIN_SECTIONS}
+        activeId={section}
+        onChange={setSection}
+        label="Seções do painel administrativo"
+      >
+        <div className="p-3">
+          {section === 'overview' ? <OverviewSection /> : null}
+          {section === 'sources' ? <SourcesScreen /> : null}
+          {section === 'channels' ? <ChannelsScreen /> : null}
+          {section === 'operators' ? <OperatorsScreen /> : null}
         </div>
-
-        <div className="col-12 col-lg-7">
-          <div className="row row-cards">
-            {ADMIN_MODULES.map((adminModule) => (
-              <div className="col-12 col-md-6" key={adminModule.title}>
-                <Card
-                  title={adminModule.title}
-                  actions={<Badge tone="warning">Pendente</Badge>}
-                >
-                  <p className="text-secondary mb-0">{adminModule.description}</p>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </Tabs>
     </AppShell>
   );
 }

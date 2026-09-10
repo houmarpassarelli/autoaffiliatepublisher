@@ -1,6 +1,6 @@
 // apps/dashboard-remote/src/api/operatorsApi.ts
 import { availableOperatorListResponseSchema, type AvailableOperatorDto } from '@aap/shared';
-import { apiRequest } from './httpClient.js';
+import { apiRequest } from '@aap/ui';
 
 /**
  * Lista da tela-portão. Nomes já reivindicados chegam com `inUse: true` e são

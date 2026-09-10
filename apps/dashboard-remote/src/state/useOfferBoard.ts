@@ -1,7 +1,7 @@
 // apps/dashboard-remote/src/state/useOfferBoard.ts
 import { useCallback, useEffect, useState } from 'react';
 import { OfferStatus, ServerEventType, type OfferDto, type ServerEvent } from '@aap/shared';
-import { describeError } from '../api/httpClient.js';
+import { describeError } from '@aap/ui';
 import { fetchOffersByStatus } from '../api/offersApi.js';
 import { useServerEvent } from '../realtime/useRealtime.js';
 import type { ConnectionStatus, RealtimeClient } from '../realtime/realtimeClient.js';

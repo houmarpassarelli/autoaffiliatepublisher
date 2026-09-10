@@ -11,7 +11,7 @@ export interface ChannelAttributes {
   key: string; // Chave estável usada nos payloads (ex.: 'telegram')
   label: string; // Nome exibido no checkbox do card
   mode: ChannelMode; // AUTOMATED (driver publica) ou ASSISTED (operador cola manualmente)
-  credentials: Record<string, string>; // Tokens de envio — nunca trafegam ao cliente remoto
+  credentials: Map<string, string>; // Tokens de envio — nunca trafegam ao cliente remoto
   copyFormatKey: CopyFormat; // Qual variante de aiCopy este canal consome
   active: boolean; // Desativar oculta o canal do dashboard remoto
   createdAt: Date;

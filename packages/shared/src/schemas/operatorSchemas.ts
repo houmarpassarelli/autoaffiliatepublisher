@@ -38,3 +38,44 @@ export const availableOperatorListResponseSchema = z.object({
 });
 
 export type AvailableOperatorListResponse = z.infer<typeof availableOperatorListResponseSchema>;
+
+/**
+ * Campos editáveis de um operador.
+ *
+ * O cadastro é deliberadamente mínimo: nome obrigatório, e-mail opcional e
+ * status. Não há senha nem token, porque a identificação existe para atribuição
+ * de autoria no comissionamento, não para controle de acesso
+ * (`FLUXO_OPERACIONAL.md`, Seção 7.1).
+ *
+ * O e-mail vazio chega do formulário como texto em branco e é normalizado para
+ * `null`: sem isso, o índice único de e-mail futuro e as consultas de contato
+ * teriam de distinguir "não informado" de "informado como string vazia".
+ */
+const operatorWritableFieldsSchema = z.object({
+  name: z.string().trim().min(1, 'Informe o nome exibido na tela-portão de seleção.'),
+  email: z
+    .union([z.email('Informe um e-mail válido.'), z.literal('')])
+    .nullish()
+    .transform((value) => (value ? value : null)),
+  active: z.boolean(), // Operador habilitado a aparecer na seleção
+});
+
+/** Cadastro de um operador novo. */
+export const operatorCreateSchema = operatorWritableFieldsSchema;
+
+export type OperatorCreateInput = z.infer<typeof operatorCreateSchema>;
+
+/** Edição de um operador existente. */
+export const operatorUpdateSchema = operatorWritableFieldsSchema;
+
+export type OperatorUpdateInput = z.infer<typeof operatorUpdateSchema>;
+
+/**
+ * Listagem do painel administrativo — inclui os operadores desativados, que a
+ * tela-portão do dashboard remoto não enxerga.
+ */
+export const operatorListResponseSchema = z.object({
+  operators: z.array(operatorDtoSchema),
+});
+
+export type OperatorListResponse = z.infer<typeof operatorListResponseSchema>;

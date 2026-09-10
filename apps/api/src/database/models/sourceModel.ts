@@ -11,7 +11,7 @@ export interface SourceAttributes {
   name: string; // Nome da loja/plataforma exibido no painel
   type: SourceType; // Mecanismo de coleta
   url: string; // Endpoint da API, URL do feed ou página de ofertas
-  credentials: Record<string, string>; // Chaves e tokens — criptografia pendente (ver nota abaixo)
+  credentials: Map<string, string>; // Chaves e tokens — criptografia pendente (ver nota abaixo)
   affiliateTag: string; // Tag/ID de afiliado usada na conversão de link
   cronExpression: string; // Intervalo de varredura (ex.: '0 * * * *')
   aiPromptTemplate: string; // Instrução específica de como a IA reescreve esta fonte

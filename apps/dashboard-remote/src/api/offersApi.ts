@@ -8,7 +8,7 @@ import {
   type OfferResolutionResponse,
   type OfferStatus,
 } from '@aap/shared';
-import { apiRequest } from './httpClient.js';
+import { apiRequest } from '@aap/ui';
 
 /** Carga inicial de uma aba. A ordenação decrescente é garantida pelo servidor. */
 export async function fetchOffersByStatus(status: OfferStatus): Promise<OfferDto[]> {

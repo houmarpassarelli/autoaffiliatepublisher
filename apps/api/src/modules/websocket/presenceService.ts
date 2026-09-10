@@ -7,7 +7,12 @@ import {
   type ServerReply,
 } from '@aap/shared';
 import { OperatorModel } from '../../database/models/index.js';
-import { claimOperator, touchConnection, unregisterConnection } from './connectionRegistry.js';
+import {
+  claimOperator,
+  listConnections,
+  touchConnection,
+  unregisterConnection,
+} from './connectionRegistry.js';
 import { broadcastOperatorConnected, broadcastOperatorDisconnected } from './broadcastEvents.js';
 
 /**
@@ -105,4 +110,33 @@ export async function resetPresence(): Promise<number> {
   );
 
   return result.modifiedCount;
+}
+
+/**
+ * Revoga a presença de um operador desativado ou excluído no painel administrativo.
+ *
+ * Sem isto, a tela dele continuaria aberta e funcional na aparência, enquanto
+ * `requireActiveOperator` recusaria cada clique — o operador veria o quadro,
+ * decidiria sobre uma oferta e receberia um erro que não explica nada.
+ *
+ * A liberação vem antes do fechamento, na mesma ordem já adotada pelo varredor
+ * de presenças órfãs: o broadcast de desconexão precisa sair mesmo que o
+ * encerramento do socket falhe, ou o nome ficaria travado como "Em uso" nas
+ * telas dos demais operadores.
+ *
+ * Nenhum evento novo é criado. O cliente já sabe tratar a perda da identidade —
+ * ele volta à tela-portão na reconexão, que é exatamente o desfecho correto
+ * para quem deixou de estar habilitado.
+ */
+export async function revokeOperatorPresence(operatorId: string): Promise<boolean> {
+  const claimed = listConnections().find((state) => state.operatorId === operatorId);
+
+  if (!claimed) {
+    return false;
+  }
+
+  await releaseConnection(claimed.socket);
+  claimed.socket.close(1000, 'Cadastro de operador alterado.');
+
+  return true;
 }

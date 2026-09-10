@@ -1,7 +1,7 @@
 // apps/dashboard-remote/src/state/useChannels.ts
 import { useCallback, useEffect, useState } from 'react';
 import { ServerEventType, type ChannelDto } from '@aap/shared';
-import { describeError } from '../api/httpClient.js';
+import { describeError } from '@aap/ui';
 import { fetchActiveChannels } from '../api/channelsApi.js';
 import { useServerEvent } from '../realtime/useRealtime.js';
 import type { ConnectionStatus, RealtimeClient } from '../realtime/realtimeClient.js';

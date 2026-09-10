@@ -116,3 +116,40 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 **Desvio deliberado da Seção 5 do `ESPECS_TECNICAS.md`:** a sequência documentada é broadcast (passo 3) antes da gravação do `DispatchLog` (passo 4). A implementação inverte os dois. O broadcast é uma escrita em memória que não falha de forma relevante; a gravação do log, sim. Inverter reduz a janela em que uma oferta fica resolvida sem auditoria — e a auditoria é o produto do disparo.
 
 **Divergência estrutural registrada:** o `ARQUITETURA.md`, Seção 8, enumera seis módulos em `apps/api/src/modules`. Esta execução acrescenta `offers/` e `channels/`. A atualização daquele documento pertence ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`) e não foi realizada nesta sessão de execução.
+
+---
+
+## 2026-09-09 — 21:06 — CRUDs do Dashboard Administrativo: Fontes de Coleta, Canais de Destino e Operadores
+
+**Contexto:** o solicitante pediu os três CRUDs do painel administrativo — Fontes de Coleta (Demanda 1.2 e 3.1), Canais de Destino e Operadores (Demanda 1.2) —, pedindo explicitamente a análise das ligações entre eles antes da execução. Os três estão pendentes na Categoria 4 do `CHECKLIST.md` desde o Sprint 0, e duas das leituras correspondentes já existem com escopo estreito: `GET /api/channels` alimenta o seletor multicanal e `GET /api/operators/available` alimenta a tela-portão, ambas com DTO reduzido e sem os registros inativos. Fontes não têm nenhuma rota.
+
+**Análise da ligação (base do desenho aprovado):** os três não são CRUDs paralelos, são as três portas de escrita do mesmo painel, ligadas por quatro eixos concretos.
+
+1. **Credenciais dividem os três em dois grupos.** `sources.credentials` e `channels.credentials` são o mesmo problema duas vezes — valor que entra e nunca volta ao cliente. Operadores não têm credencial alguma. Como o cliente não recebe os valores, ele não pode reenviá-los inteiros numa edição: a escrita de credencial é **merge patch** (chave com `null` remove). É também o ponto único onde a criptografia em repouso entrará depois, sem alterar contrato.
+
+2. **Os três são referenciados por coleções que não podem perder o vínculo — e isto decide o DELETE.** Fontes por `offers.sourceId`; canais por `offers.selectedChannels` e `dispatch_logs.channels` (chave desnormalizada); operadores por `offers.operatorId` e `dispatch_logs.operatorId` mais `operatorName` desnormalizado. Como `dispatch_logs` é insumo direto do comissionamento e a arquitetura a trata como auditoria imutável, vale **uma regra única para os três**: desativar é a operação normal, e excluir só é aceito quando não existe referência.
+
+3. **Os três têm chave natural única e hoje a colisão devolve 500.** `sources.name`, `channels.key` e `operators.name` são índices únicos; o `E11000` do Mongo cai no tratador central como erro interno. Nome repetido é erro do usuário e precisa virar 409 nomeando o campo — um tradutor compartilhado, não três `try/catch`.
+
+4. **Assimetria real no efeito sobre o dashboard remoto.** O canal fecha um ciclo que já estava pronto pelas duas pontas: `CHANNELS_UPDATED` existe tipado em `broadcastEvents.ts` e é consumido em `useChannels.ts` — faltava apenas o emissor, que é este CRUD. O operador não tem evento no catálogo do `ESPECS_TECNICAS.md`, Seção 3.1, e nenhum será inventado; o efeito que não pode esperar é outro — desativar ou excluir um operador **conectado** deixa a tela dele aberta e inútil, porque `requireActiveOperator` recusa toda ação. A fonte não tem efeito em tempo real.
+
+**Consequência de arquitetura:** uma moldura de recurso compartilhada mais um hook de listagem e escrita, com três telas finas por cima — e não três telas escritas três vezes. É o consumo previsto para `Modal`, `DataTable` e `FormField`, cujo escopo completo foi aprovado na sessão do kit exatamente com esta justificativa.
+
+**Escopo aprovado:**
+
+1. **Contrato compartilhado** — schemas de criação e edição das três coleções, `adminChannelDtoSchema` com `credentialKeys` (o DTO consumido pelo dashboard remoto permanece intocado), `credentialsPatchSchema` e validador de `cronExpression`.
+2. **Backend** — módulo `sources/` novo; escrita, credenciais e broadcast em `channels/`; escrita em `operators/`; utilitário de credenciais e tradutor de chave duplicada compartilhados; `revokeOperatorPresence()` na camada de tempo real.
+3. **Kit `@aap/ui`** — promoção do cliente HTTP hoje isolado no dashboard remoto e hook de recurso administrativo.
+4. **Dashboard Administrativo** — moldura de recurso, editor de credenciais e as três telas, com navegação por `Tabs`.
+
+**Decisões do solicitante nesta sessão:**
+
+| Decisão | Escolha | Efeito |
+| :--- | :--- | :--- |
+| Política de exclusão | Bloquear quando referenciado | `DELETE` responde 409 quando há oferta ou log apontando para o registro; a tela orienta a desativar. Preserva a auditoria do comissionamento |
+| Cliente HTTP | Promover para o `@aap/ui` | `apiRequest`, `ApiError` e `describeError` saem do dashboard remoto e passam a ser compartilhados; evita a duplicação byte a byte que a sessão do kit eliminou |
+| Operador desativado enquanto conectado | Encerrar o socket | Presença liberada e conexão fechada; o cliente já sabe voltar à tela-portão ao perder a identidade. Sem contrato novo |
+
+**Por que o cliente HTTP vai para o `@aap/ui` e não para o `@aap/shared`:** é código de navegador. O `@aap/shared` compila sem `lib: DOM` e é consumido pelo backend — levar `fetch` para lá vazaria globais de navegador no pacote de contrato. O `@aap/ui` já faz HTTP no `useBackendHealth`.
+
+**Delimitação de escopo:** a criptografia das credenciais em repouso permanece decisão em aberto (Categoria 8) — os valores são gravados como recebidos, como os models já documentam. Ficam de fora também `POST /api/sources/:id/run`, o Painel de Auditoria de Disparos e qualquer motor de ingestão.

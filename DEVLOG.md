@@ -326,3 +326,139 @@ Os dados de verificação foram removidos do banco (as cinco coleções voltaram
 - **A fila BullMQ não entrou** (Demanda 2.1, decisão do solicitante). O horizonte é lido da coleção de ofertas, e `dispatchScheduler.ts` isola os dois pontos que a fila vai assumir. Enquanto ela não existe, nada move uma oferta de `SCHEDULED` para `COMPLETED`.
 - **O descarte é irreversível e não pede confirmação.** `DISCARDED` bloqueia o produto permanentemente na deduplicação da ingestão, e um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade ("5 a 10 segundos", `FLUXO_OPERACIONAL.md`, Seção 1); se o risco pesar mais que a agilidade, é decisão do solicitante e vira item próprio.
 - **Botão "Copiar para Área de Transferência"**: a rota já aceita `COPIED_CLIPBOARD` e o caminho está verificado ponta a ponta. O item permanece pendente como task exclusivamente de interface.
+
+---
+
+## 2026-09-09 — CRUDs do Dashboard Administrativo: Fontes, Canais e Operadores
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 09/09/2026, 21:06.
+
+### 1. A ligação entre os três itens, e o que ela determinou no código
+
+Os três não são CRUDs paralelos: são as três portas de escrita do mesmo painel. Quatro eixos os amarram, e cada um decidiu um trecho de código.
+
+**a) Credenciais dividem os três em dois grupos.** `sources.credentials` e `channels.credentials` são o mesmo problema duas vezes — valor que entra e nunca volta ao cliente. Operadores não têm credencial alguma. Como o cliente não recebe os valores, ele não pode reenviá-los inteiros numa edição: a escrita de credencial virou **merge patch**, com `null` como o único comando explícito de remoção. A mecânica ficou em `database/credentials.ts`, compartilhada pelos dois — divergir nisso significaria vazar credencial num dos dois caminhos.
+
+**b) Os três são referenciados por coleções que não podem perder o vínculo.** Fontes por `offers.sourceId`; canais por `offers.selectedChannels` e `dispatch_logs.channels`, pela chave desnormalizada; operadores por `offers.operatorId` e `dispatch_logs.operatorId` mais `operatorName`. Como `dispatch_logs` é insumo direto do comissionamento, vale **uma regra única para os três**: desativar é a operação do dia a dia, e excluir só é aceito quando não existe referência — 409 com mensagem que orienta a desativar.
+
+**c) Os três têm chave natural única, e a colisão devolvia 500.** `sources.name`, `channels.key` e `operators.name` são índices únicos; o `E11000` do Mongo caía no tratador central como erro desconhecido. Nome repetido é erro de quem preencheu o formulário: virou 409 nomeando o campo, por um tradutor compartilhado em `server/mongoErrors.ts`.
+
+**d) O efeito no dashboard remoto é assimétrico.** O canal fecha um ciclo que já estava pronto pelas duas pontas — `CHANNELS_UPDATED` existia tipado em `broadcastEvents.ts` e consumido em `useChannels.ts`, e faltava apenas o emissor. O operador não tem evento no catálogo e **nenhum foi inventado**; o que não podia esperar era outro problema, tratado no item 4 abaixo. A fonte não tem efeito em tempo real.
+
+**Consequência de arquitetura:** uma moldura de recurso compartilhada mais um hook de listagem e escrita, com três telas finas por cima. É o consumo previsto quando `Modal`, `DataTable` e `FormField` entraram no `@aap/ui` com escopo completo.
+
+### 2. Contrato compartilhado
+
+| Arquivo | O que ganhou |
+| :--- | :--- |
+| `commonSchemas.ts` | `resourceIdParamsSchema`, `credentialsPatchSchema` e `cronExpressionSchema` |
+| `sourceSchemas.ts` | `sourceCreateSchema`, `sourceUpdateSchema`, `sourceListResponseSchema` |
+| `channelSchemas.ts` | `adminChannelDtoSchema` (DTO + `credentialKeys`), `channelCreateSchema`, `channelUpdateSchema` |
+| `operatorSchemas.ts` | `operatorCreateSchema`, `operatorUpdateSchema`, `operatorListResponseSchema` |
+
+**O DTO consumido pelo dashboard remoto não mudou.** O painel administrativo recebe um DTO próprio, que acrescenta apenas os **nomes** das credenciais. A assimetria segue o precedente já existente entre `operatorDtoSchema` e `availableOperatorDtoSchema`: o que o remoto não recebe, ele não pode vazar.
+
+**Validação da `cronExpression` sem dependência nova.** Cinco campos conferidos um a um contra a faixa de cada um, aceitando `*`, número, intervalo, passo e lista. É validação de **formato**, e existe para que a expressão inválida seja recusada no formulário e não meses depois, em silêncio, dentro do worker de ingestão. A validação semântica final continua sendo do `node-cron`, quando a Demanda 1.3 chegar.
+
+### 3. Backend
+
+| Arquivo | Conteúdo |
+| :--- | :--- |
+| `database/credentials.ts` | Leitura dos nomes das chaves e aplicação do merge patch — o ponto onde a criptografia em repouso vai entrar |
+| `server/mongoErrors.ts` | `E11000` → `ConflictError` nomeando o campo do formulário |
+| `modules/sources/` | Mapeador, serviço e as quatro rotas de `/api/sources` |
+| `modules/channels/channelService.ts` | Escrita, credenciais e o broadcast a cada alteração |
+| `modules/channels/channelAdminRoutes.ts` | As quatro rotas de `/api/channels` |
+| `modules/operators/` | Mapeador, serviço e as rotas administrativas |
+| `modules/websocket/presenceService.ts` | `revokeOperatorPresence()` |
+
+**Realinhamento de rota, corrigindo um desvio da sessão anterior.** A tabela do `ESPECS_TECNICAS.md`, Seção 9, reserva `/api/channels` ao CRUD administrativo; a sessão anterior usou esse caminho para a leitura do dashboard remoto. Como as duas leituras têm DTOs diferentes e públicos diferentes, a do remoto passou a ser **`GET /api/channels/active`** — o sufixo diz para quem ela é — e `/api/channels` voltou a ser do painel, como documentado. O cliente do dashboard remoto foi ajustado junto, numa linha.
+
+**Os models declaravam `credentials` como `Record<string, string>`, mas o Mongoose entrega `Map`.** A divergência estava latente porque nenhum código escrevia o campo até agora. Os dois models passaram a declarar `Map<string, string>`, que é o que existe em tempo de execução; o mapeador aceita as duas formas, porque o `lean()` devolve objeto simples.
+
+### 4. O que distingue o CRUD de operadores dos outros dois
+
+Fontes e canais são configuração inerte. Um operador pode estar **conectado** no instante em que o administrador o altera — e aí `requireActiveOperator` passa a recusar cada clique dele, sem que a tela mostre nada disso. O operador veria o quadro, decidiria sobre uma oferta e receberia um erro que não explica nada.
+
+`revokeOperatorPresence()` libera a presença e encerra o socket. A liberação vem antes do fechamento, na mesma ordem já adotada pelo varredor de presenças órfãs: o broadcast de desconexão precisa sair mesmo que o `terminate` falhe, ou o nome ficaria travado como "Em uso" nas telas dos demais.
+
+**Nenhum evento novo foi criado.** O cliente já sabe tratar a perda de identidade e volta à tela-portão na reconexão — o encerramento do socket reaproveita esse caminho inteiro, e o catálogo de seis eventos do `ESPECS_TECNICAS.md` permanece intacto.
+
+Na listagem administrativa, `isOnline` vem do registro de conexões vivas, e não do banco: o campo persistido é projeção do socket, e uma projeção defasada mostraria como conectado quem já saiu.
+
+### 5. Kit compartilhado
+
+**O cliente HTTP saiu do dashboard remoto e foi para o `@aap/ui`.** `apiRequest`, `ApiError` e `describeError` estavam isolados num app enquanto o outro precisava exatamente deles — copiá-los seria reintroduzir a duplicação byte a byte que a sessão do kit eliminou. Foi para o `@aap/ui`, e não para o `@aap/shared`, porque é código de navegador: o pacote de contrato compila sem `lib: DOM` e é consumido também pelo backend.
+
+Ganhou `apiWrite` e `apiDelete`. O `apiDelete` é separado por um motivo concreto: a resposta de sucesso é 204 sem corpo, e interpretar corpo vazio como JSON falharia justamente no caminho feliz.
+
+`useAdminResource` concentra listar, criar, editar e excluir. Duas decisões dele valem para as três telas:
+
+- **`loadError` e `writeError` são estados distintos.** "Não consegui carregar a lista" substitui a tabela; "este nome já existe" pertence ao formulário aberto, que não pode desaparecer levando junto o que o operador já digitou.
+- **A lista é recarregada do servidor após cada escrita, não remendada em memória.** A resposta traz o registro alterado, mas não a ordenação nem os efeitos colaterais.
+
+### 6. Dashboard Administrativo
+
+O `App.tsx` deixou de ser um cartaz de módulos previstos: ganhou navegação por abas entre Visão geral, Fontes, Canais e Operadores, sem router novo e sem animação. A Auditoria de Disparos continua exibida como pendente, porque é.
+
+`ResourceScreen` é a moldura das três telas — tabela, formulário em diálogo e confirmação de exclusão. Cada tela informa apenas as colunas, os campos e como o rascunho vira payload.
+
+`CredentialsEditor` existe porque a credencial é o único campo do painel que entra e nunca volta. Um formulário comum não serve: não há valor para preencher ao abrir a edição, e campo vazio significaria "apagar", não "manter". As três operações da tela espelham o merge patch do servidor — manter, substituir e remover.
+
+**A exclusão pede confirmação**, ao contrário do descarte de oferta no dashboard remoto. Lá vale o requisito de agilidade de 5 a 10 segundos por decisão; aqui não há pressa e o alvo é um cadastro do qual todo o resto depende.
+
+### 7. Um defeito de interface encontrado na conferência visual
+
+Os formulários dos cadastros são longos, e o diálogo passou a ficar mais alto que a janela. O rodapé — com "Salvar" — saía inteiro de vista: o operador precisava rolar até o fim só para achar a ação que foi ali executar. Os cliques programáticos da verificação não pegariam isso, porque `click()` funciona em elemento fora da vista.
+
+O `Modal` do `@aap/ui` ganhou a opção `scrollable`, que fixa cabeçalho e rodapé e faz apenas o corpo rolar. Conferido também numa janela de 620 px de altura, o caso em que o formulário mais aperta.
+
+Corrigida junto a falta de respiro entre a descrição da tela e o cabeçalho da tabela.
+
+Também ajustada a concordância da mensagem de chave duplicada, que saía como "Já existe um registro com **este chave**". Os rótulos passaram a incluir o artigo, porque o gênero varia entre os campos.
+
+### 8. Validações executadas
+
+`typecheck`, `lint` e `build` limpos nos cinco workspaces. Backend de pé sobre MongoDB e Redis, com dados semeados e removidos ao final.
+
+**Backend, 26 verificações:**
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Criação, edição e exclusão nos três cadastros | Conferido |
+| DTO de fonte e de canal sem nenhum valor de credencial | Conferido |
+| Merge patch mantendo, removendo e acrescentando chaves na mesma requisição | Conferido |
+| Nome e chave duplicados | 409 com o campo nomeado, não 500 |
+| `cron` inválido recusado; `*/15 8-20 * * 1-5` aceito | Conferido |
+| E-mail em branco normalizado para `null`; e-mail inválido recusado | Conferido |
+| `GET /api/channels/active` sem `credentialKeys` e sem canal inativo | Conferido |
+| Listagens administrativas incluindo os registros desativados | Conferido |
+| Chave de canal imutável na edição | Conferido |
+| Exclusão com referência em oferta ou log | 409 nos três, com orientação a desativar |
+| Exclusão sem referência | 204 |
+
+**Tempo real, 12 verificações** (cliente WebSocket puro): `CHANNELS_UPDATED` emitido na criação, na edição e na exclusão, sempre com a lista completa e sem traço de credencial; canal excluído sai do broadcast; desativar um operador conectado encerra o socket com código 1000, anuncia a desconexão aos demais e libera o nome.
+
+**Interface do painel, 26 verificações** (Chromium headless dirigido por CDP com WebSocket puro — sem trazer Playwright nem Puppeteer para o repositório, preservando aquela decisão em aberto): as quatro abas; cadastro real de fonte com credencial pela tela; valor da credencial nunca reexibido; nome duplicado recusado **dentro** do diálogo, preservando o que já foi digitado; cron inválido recusado; confirmação de exclusão e a recusa por referência; chave de canal editável na criação e travada na edição; e-mail ausente comunicado como "Não informado"; todo campo com rótulo associado; **zero elementos com transição ou animação acima de zero**; nenhuma exceção de JavaScript.
+
+**Integração entre os dois painéis, 13 verificações** (duas abas independentes, painel e dashboard remoto lado a lado):
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Operador cadastrado no painel aparece na tela-portão | Conferido |
+| Canal cadastrado pela interface do painel chega ao card do operador, **sem F5** e já pré-marcado | Conferido em imagem |
+| Canal desativado no painel some do seletor do card | Conferido |
+| Painel exibe o operador como "Conectado" enquanto ele opera | Conferido |
+| Operador desativado é devolvido à tela-portão e some da lista de nomes | Conferido em imagem |
+
+**Regressão do dashboard remoto após a promoção do cliente HTTP, 5 verificações:** carga do quadro, publicação, saída do card da aba Abertas, transição para `COMPLETED` e auditoria gravada com a assinatura do operador.
+
+Os dados de verificação foram removidos do banco (as cinco coleções voltaram a zero documentos) e os scripts, descartados. Nenhum commit, branch ou push foi realizado.
+
+### 9. Pendências deixadas explicitamente em aberto
+
+- **Criptografia das credenciais em repouso** continua sendo decisão em aberto (Categoria 8). Os valores são gravados como recebidos, e `database/credentials.ts` é agora o ponto único onde a criptografia entra, sem alterar contrato de model nem DTO.
+- **`lastRunAt` da fonte** é escrito pelo worker de ingestão, não por este CRUD. Nasce `null` e assim permanece.
+- **`POST /api/sources/:id/run`** e o **Painel de Auditoria de Disparos** permanecem pendentes na Categoria 4.
+- **Cadastro de operador não tem evento de broadcast.** Um operador criado enquanto a tela-portão está aberta só aparece na recarga da lista ou na reconexão. Criar um sétimo evento alteraria o catálogo do `ESPECS_TECNICAS.md` e não foi feito sem decisão do solicitante.
+- **Divergência estrutural**: o `ARQUITETURA.md`, Seção 8, enumera os módulos de `apps/api/src/modules`. Esta execução acrescenta `sources/`, somando-se a `offers/` e `channels/` da sessão anterior. A atualização daquele documento, e a da tabela de rotas da Seção 9 do `ESPECS_TECNICAS.md` com `/api/channels/active`, pertencem ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`).

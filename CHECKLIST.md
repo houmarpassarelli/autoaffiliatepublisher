@@ -2,7 +2,7 @@
 
 Este documento compila o status completo de desenvolvimento do projeto **Auto Affiliate Publisher**, categorizado por **Fluxos de Execução**. Cada item possui sua própria caixa de seleção (`- [x]` Implementado no Código, `- [ ]` Pendente, `- [X]` Removido/Substituído) e aponta para o documento de especificação (`.md`) correspondente.
 
-**Estado atual:** monorepo estruturado (Sprint 0, 08/09/2026), camada de tempo real no ar (Demanda 2.2, 09/09/2026), kit de interface compartilhado (`@aap/ui`, 09/09/2026) e o **ciclo de curadoria fechado de ponta a ponta** (09/09/2026). O Dashboard Remoto é operável: tela-portão com presença ativa, as três abas carregando do servidor, card com seletor multicanal e os botões "Publicar" e "Descartar", com o bloqueio atômico anti-concorrência e a auditoria gravada a cada publicação. Seguem pendentes a ingestão, a IA, a fila BullMQ, os drivers de canal — **nenhuma publicação real acontece ainda** — e os CRUDs do painel administrativo.
+**Estado atual:** monorepo estruturado (Sprint 0, 08/09/2026), camada de tempo real no ar (Demanda 2.2, 09/09/2026), kit de interface compartilhado (`@aap/ui`, 09/09/2026), o **ciclo de curadoria fechado de ponta a ponta** (09/09/2026) e os **três CRUDs do painel administrativo** (09/09/2026). O Dashboard Remoto é operável: tela-portão com presença ativa, as três abas carregando do servidor, card com seletor multicanal e os botões "Publicar" e "Descartar", com o bloqueio atômico anti-concorrência e a auditoria gravada a cada publicação. O Dashboard Administrativo é operável: fontes, canais e operadores cadastrados por tela, com credenciais que entram e nunca voltam, e o canal alterado no painel refletindo no card do operador sem recarregar a página. Seguem pendentes a ingestão, a IA, a fila BullMQ, os drivers de canal — **nenhuma publicação real acontece ainda** — e o painel de auditoria.
 
 ## Sumário
 
@@ -81,7 +81,7 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#24-coleção-channels--canais-de-destino))*
 - [x] **Model `dispatch_logs`** (*auditoria imutável com assinatura desnormalizada do operador, `productSku` e preço congelado no disparo*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
-- [x] **Servidor WebSocket no Fastify com Broadcast** (*rota `GET /ws` sobre `@fastify/websocket`; os seis eventos disponíveis como emissores tipados, com `OPERATOR_CONNECTED` e `OPERATOR_DISCONNECTED` funcionando de ponta a ponta — os outros quatro aguardam os módulos que os disparam*) — **Demanda 2.2, Sprint 2**
+- [x] **Servidor WebSocket no Fastify com Broadcast** (*rota `GET /ws` sobre `@fastify/websocket`; dos seis eventos, quatro funcionam de ponta a ponta — os dois de presença, `OFFER_STATE_CHANGED` a cada ação resolutiva e `CHANNELS_UPDATED` a cada escrita no CRUD de canais. `OFFER_CREATED` aguarda o worker de ingestão e `OFFER_PUBLISHED`, o worker da fila*) — **Demanda 2.2, Sprint 2**
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026)*
 - [x] **Controle de Presença Ativa e Validação das Mensagens do Cliente** (*`OPERATOR_CLAIM` com resposta tipada de aceite ou recusa, `HEARTBEAT`, e validação em tempo de execução de tudo que chega pelo socket*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#32-mensagens-enviadas-pelo-cliente))*
@@ -89,7 +89,7 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ### Pendentes
-- [ ] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` — método a definir*)
+- [ ] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` — método a definir. Os dois CRUDs já escrevem credenciais, e `apps/api/src/database/credentials.ts` concentra a leitura e a gravação: é o ponto único onde a criptografia entra, sem alterar contrato de model nem de DTO*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Migrar a imagem do MongoDB para a linha 8.x** (*fixada em `mongo:7` no `docker-compose.yml`: as imagens 8.x recusam iniciar nesta máquina com "Linux kernel versions 6.19 and newer has a known incompatibility" — SERVER-121912*)
   *(Ref: [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 08/09/2026, item 5)*
@@ -104,14 +104,16 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#7-frontend-dos-dashboards) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026)*
 - [x] **Casca das Duas Interfaces sobre o Kit** (*painel administrativo com estado da máquina e os módulos previstos; painel remoto com as três abas do ciclo de vida trocando por estado real*)
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#8-estrutura-de-diretórios-monorepo))*
+- [x] **CRUD de Fontes de Coleta** (*nome, tipo, URL, credenciais, tag de afiliado, intervalo de varredura com validação da expressão cron e prompt customizado da IA; `GET/POST/PUT/DELETE /api/sources` com tela própria no painel*) — **Demanda 1.2 e 3.1, Sprints 1 e 3**
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#43-módulo-c--dashboard-1-configuração-e-ingestão-local--admin) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — CRUDs administrativos)*
+- [x] **CRUD de Canais de Destino** (*cadastro dinâmico com credenciais, modo de execução e status; **`CHANNELS_UPDATED` passou a ser emitido a cada escrita** e o reflexo no card do dashboard remoto foi conferido com os dois painéis abertos lado a lado. A chave é imutável após a criação, por já estar gravada nos logs de disparo*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#6-seletor-multicanal-por-oferta) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — CRUDs administrativos)*
+- [x] **CRUD de Operadores** (*nome obrigatório e único, e-mail opcional, sem senha ou token; `isOnline` lido do registro de conexões vivas. Desativar ou excluir um operador **conectado** encerra a sessão dele e o devolve à tela-portão*) — **Demanda 1.2, Sprint 1**
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#71-cadastro-dashboard-administrativo) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — CRUDs administrativos)*
+- [x] **Regra Única de Exclusão dos Três Cadastros** (*desativar é a operação do dia a dia; excluir só é aceito quando não há oferta nem log de disparo referenciando o registro, com 409 e mensagem que orienta a desativar. Preserva a base de auditoria, que é insumo do comissionamento*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
 
 ### Pendentes
-- [ ] **CRUD de Fontes de Coleta** (*nome, tipo, URL, chaves de API, intervalo de varredura e prompt customizado da IA*) — **Demanda 1.2 e 3.1, Sprints 1 e 3**
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#43-módulo-c--dashboard-1-configuração-e-ingestão-local--admin))*
-- [ ] **CRUD de Canais de Destino** (*cadastro dinâmico com credenciais, modo de execução e status; reflete no dashboard remoto via `CHANNELS_UPDATED`. A leitura `GET /api/channels` já existe e alimenta o seletor multicanal; faltam a escrita, as credenciais e o broadcast*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#6-seletor-multicanal-por-oferta))*
-- [ ] **CRUD de Operadores** (*nome obrigatório, e-mail opcional, sem senha ou token. A leitura `GET /api/operators/available` já existe e alimenta a tela-portão; falta a escrita*) — **Demanda 1.2, Sprint 1**
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#71-cadastro-dashboard-administrativo))*
 - [ ] **Painel de Auditoria de Disparos** (*tabela com filtros por data, operador, loja de origem e canal — colunas Data/Hora, Operador, Produto, Loja, Preço, Link, Status*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#8-rastreamento-de-ações-e-auditoria))*
 - [ ] **Disparo Manual de Varredura por Fonte** (*rota `POST /api/sources/:id/run` para testar uma fonte sem esperar o cron*)

@@ -6,8 +6,16 @@ import {
   ServerReplyType,
   type AvailableOperatorDto,
 } from '@aap/shared';
-import { Alert, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@aap/ui';
-import { describeError } from '../api/httpClient.js';
+import {
+  Alert,
+  Button,
+  Card,
+  describeError,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+} from '@aap/ui';
 import { fetchAvailableOperators } from '../api/operatorsApi.js';
 import { useServerEvent } from '../realtime/useRealtime.js';
 import type { RealtimeClient } from '../realtime/realtimeClient.js';

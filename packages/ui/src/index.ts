@@ -13,4 +13,6 @@ export * from './components/DataTable.js';
 export * from './components/Modal.js';
 export * from './components/FormField.js';
 export * from './components/Tabs.js';
+export * from './client/httpClient.js';
 export * from './hooks/useBackendHealth.js';
+export * from './hooks/useAdminResource.js';

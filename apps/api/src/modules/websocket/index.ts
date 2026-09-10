@@ -7,7 +7,7 @@ import { startPresenceReaper, stopPresenceReaper } from './presenceReaper.js';
 import { websocketRoutes } from './websocketRoutes.js';
 
 export * from './broadcastEvents.js';
-export { resetPresence } from './presenceService.js';
+export { resetPresence, revokeOperatorPresence } from './presenceService.js';
 
 // A presença viva é consultada por outros módulos — a tela-portão precisa saber
 // quais nomes já estão reivindicados antes de qualquer conexão daquele cliente.

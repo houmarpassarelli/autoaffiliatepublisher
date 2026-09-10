@@ -16,6 +16,15 @@ export interface ModalProps {
    * em andamento que não podem ser interrompidas pela metade.
    */
   dismissible?: boolean;
+  /**
+   * Fixa cabeçalho e rodapé e faz apenas o corpo rolar.
+   *
+   * Existe para os formulários longos dos cadastros administrativos: sem isto,
+   * um diálogo mais alto que a janela empurra o rodapé inteiro para fora da
+   * vista, e o operador precisa rolar até o fim só para achar "Salvar" —
+   * justamente a ação que ele foi ali executar.
+   */
+  scrollable?: boolean;
   children: ReactNode;
 }
 
@@ -46,6 +55,7 @@ export function Modal({
   footer,
   size = 'md',
   dismissible = true,
+  scrollable = false,
   children,
 }: ModalProps): React.JSX.Element | null {
   const titleId = useId();
@@ -107,7 +117,11 @@ export function Modal({
           }
         }}
       >
-        <div className={SIZE_CLASS[size]}>
+        <div
+          className={
+            scrollable ? `${SIZE_CLASS[size]} modal-dialog-scrollable` : SIZE_CLASS[size]
+          }
+        >
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id={titleId}>

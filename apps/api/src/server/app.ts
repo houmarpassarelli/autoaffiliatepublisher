@@ -8,9 +8,10 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { env, isProduction } from '../config/env.js';
-import { channelRoutes } from '../modules/channels/index.js';
+import { channelAdminRoutes, channelRoutes } from '../modules/channels/index.js';
 import { offerRoutes } from '../modules/offers/index.js';
 import { operatorRoutes } from '../modules/operators/index.js';
+import { sourceRoutes } from '../modules/sources/index.js';
 import { registerWebsocketModule } from '../modules/websocket/index.js';
 import { healthRoutes } from './routes/healthRoutes.js';
 
@@ -65,6 +66,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(offerRoutes);
   await app.register(channelRoutes);
   await app.register(operatorRoutes);
+
+  // CRUDs do Dashboard Administrativo. Concentram credenciais, prompts da IA e
+  // os cadastros que alimentam todo o restante do sistema — por decisão
+  // arquitetural, só a máquina local os alcança (ARQUITETURA.md, Seção 4.3).
+  await app.register(sourceRoutes);
+  await app.register(channelAdminRoutes);
 
   // Camada de tempo real: rota /ws, broadcast de estado global e presença ativa.
   await registerWebsocketModule(app);

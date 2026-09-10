@@ -1,5 +1,14 @@
-// apps/dashboard-remote/src/api/httpClient.ts
+// packages/ui/src/client/httpClient.ts
 import { errorResponseSchema } from '@aap/shared';
+
+/**
+ * Cliente HTTP compartilhado pelos dois dashboards.
+ *
+ * Vive no `@aap/ui`, e não no `@aap/shared`, porque é código de navegador: o
+ * pacote de contrato compila sem `lib: DOM` e é consumido também pelo backend —
+ * levar `fetch` para lá vazaria globais de navegador no contrato. O `@aap/ui`
+ * já é o lugar do código de cliente comum às duas telas.
+ */
 
 /**
  * Falha devolvida pela máquina administrativa, com o código HTTP preservado.
@@ -66,6 +75,32 @@ export async function apiRequest<T>(
   }
 
   return parser.parse(await response.json());
+}
+
+/** Corpo de requisição serializado. `undefined` produz requisição sem corpo. */
+type RequestBody = unknown;
+
+/** Escrita com resposta validada — usada nos POST e PUT dos CRUDs do painel. */
+export async function apiWrite<T>(
+  path: string,
+  method: 'POST' | 'PUT',
+  body: RequestBody,
+  parser: ResponseParser<T>,
+): Promise<T> {
+  return apiRequest(path, parser, { method, body: JSON.stringify(body) });
+}
+
+/**
+ * Exclusão. Não usa `apiRequest` porque a resposta de sucesso é 204 sem corpo:
+ * tentar interpretar um corpo vazio como JSON falharia justamente no caminho
+ * feliz. A recusa, quando vem, continua trazendo a mensagem do servidor.
+ */
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(path, { method: 'DELETE' });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await readErrorMessage(response));
+  }
 }
 
 /** Mensagem legível de qualquer falha, para exibição direta na interface. */
