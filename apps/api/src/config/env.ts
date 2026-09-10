@@ -39,6 +39,10 @@ const envSchema = z.object({
   // Conexões silenciosas por mais tempo que isto são encerradas e têm a presença
   // do operador liberada, evitando nomes travados como "Em uso".
   WEBSOCKET_HEARTBEAT_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
+
+  // Chaves de API de LLM
+  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY é obrigatória para gerar copy.'),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
 });
 
 export type Env = z.infer<typeof envSchema>;

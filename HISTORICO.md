@@ -251,4 +251,7 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 4. **Fábrica:** `ingestorFactory.ts` que roteia a solicitação do worker para a instância adequada, baseado no `SourceType`.
 
 ## 2026-09-10 02:35 - Deduplicação por dedupeHash e SKU
-- **Contexto:** Implementar a lógica de deduplicação na ingestão para garantir que ofertas já capturadas ou descartadas (`DISCARDED`) sejam ignoradas. A deduplicação utilizará o hash SHA-256 da URL canônica da oferta e a combinação de `externalSku` com `sourceId`.
+- **Contexto:** Implementar a lógica de deduplicação na ingestão para garantir que ofertas já capturadas ou descartadas (`DISCARDED`) sejam ignoradas. A deduplicação utilizará o hash SHA-256 da URL canônica da oferta e a combination de `externalSku` com `sourceId`.
+
+## 2026-09-10 02:44 - Geração das 3 Variantes de Copy (Módulo IA)
+- **Contexto:** Implementar a integração com LLM para gerar as 3 variantes de copy (messaging, social, article) usando o OpenAI (gpt-4o-mini) garantindo retorno determinístico via JSON mode (Structured Outputs). Inclui também a criação da rota temporária/sob-demanda `/api/offers/:id/regenerate-copy` e integração no frontend.

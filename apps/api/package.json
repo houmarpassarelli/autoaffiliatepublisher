@@ -23,6 +23,7 @@
     "fastify-type-provider-zod": "^7.0.0",
     "ioredis": "^6.0.0",
     "mongoose": "^9.9.5",
+    "openai": "^7.13.0",
     "playwright": "^1.63.0",
     "zod": "^4.5.4"
   },

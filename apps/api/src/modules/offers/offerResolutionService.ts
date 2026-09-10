@@ -268,10 +268,9 @@ export async function discardOffer(
 }
 
 /**
- * Regenera a copy da oferta usando o módulo de IA (Demanda 1.4 pendente).
- *
- * Como a integração com LLM ainda não existe, esta função apenas anexa
- * um texto de marcação nas variantes de copy existentes.
+ * Regenera a copy da oferta usando o módulo de IA.
+ * Resgata a fonte associada para obter o prompt template e pede ao LLM
+ * uma nova geração de copy, atualizando a oferta e respondendo com o novo estado.
  */
 export async function regenerateOfferCopy(offerId: string) {
   const offer = await OfferModel.findById(offerId);
@@ -284,30 +283,23 @@ export async function regenerateOfferCopy(offerId: string) {
     throw new BadRequestError('Apenas ofertas abertas podem ter a copy regenerada.');
   }
 
-  // MOCK: O LLM ainda não está integrado (Demanda 1.4). Simulando a regeneração.
-  const aiCopyMap = offer.aiCopy as unknown as Map<string, string>;
-  
-  if (aiCopyMap instanceof Map) {
-    const formats = ['messaging', 'social', 'article'];
-    for (const format of formats) {
-      if (aiCopyMap.has(format)) {
-        aiCopyMap.set(format, (aiCopyMap.get(format) ?? '') + '\n\n[Regenerada pela IA]');
-      }
-    }
-  } else if (typeof offer.aiCopy === 'object') {
-    const aiCopyObj = offer.aiCopy as Record<string, string>;
-    const formats = ['messaging', 'social', 'article'];
-    for (const format of formats) {
-      if (aiCopyObj[format]) {
-        aiCopyObj[format] += '\n\n[Regenerada pela IA]';
-      }
-    }
-  }
-
-  await offer.save();
-
-  const source = await SourceModel.findById(offer.sourceId).select({ name: 1 }).lean();
+  const source = await SourceModel.findById(offer.sourceId).select({ name: 1, aiPromptTemplate: 1 }).lean();
   const sourceName = source?.name ?? 'Fonte removida';
+  const promptTemplate = source?.aiPromptTemplate ?? 'Gere uma copy atrativa ressaltando o desconto.';
+
+  const { aiService } = await import('../ai/aiService.js');
+  
+  const newCopy = await aiService.generateCopy({
+    title: offer.title,
+    priceOriginal: offer.priceOriginal,
+    priceCurrent: offer.priceCurrent,
+    discountPct: offer.discountPct,
+    sourceName: sourceName,
+    affiliateUrl: offer.affiliateUrl,
+  }, promptTemplate);
+
+  offer.set('aiCopy', newCopy);
+  await offer.save();
 
   const { toOfferDto } = await import('./offerMapper.js');
   return toOfferDto(offer, sourceName);

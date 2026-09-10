@@ -691,3 +691,12 @@ Criado `apps/api/src/modules/ingestion/deduplicationService.ts` contendo as fun�
 ### 2. Validações Executadas
 
 Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs de `contracts.ts` e do Schema Mongoose existente. As lógicas respeitam as especificações do `ESPECS_TECNICAS.md`, Seção 8.1.
+
+## 2026-09-10 02:44 - Geração das 3 Variantes de Copy (Módulo IA)
+- **Contexto:** Execução da Geração das 3 Variantes de Copy utilizando o serviço da OpenAI.
+- **Implementação:**
+  - Instalação do SDK `openai`.
+  - Configuração de `OPENAI_API_KEY` e `OPENAI_MODEL` no `env.ts`.
+  - Criação de `aiService.ts` forçando o retorno estruturado (Structured Outputs - `response_format`) e compondo as restrições da IA (sem envio de HTML).
+  - Atualização do mock `regenerateOfferCopy` no serviço de resolução de ofertas para interagir com o novo `aiService` resgatando o `aiPromptTemplate` nativo da fonte geradora.
+  - O fluxo de Regeneração já estava integrado ao Dashboard Remoto (Thin Client).

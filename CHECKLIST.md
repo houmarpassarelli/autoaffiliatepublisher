@@ -50,14 +50,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Implementados no Código
 - [x] **Serviço de Conversão de Link de Afiliado** (*converte a URL do produto na URL rastreada usando a `affiliateTag` da fonte*)
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#3-pipeline-de-ingestão-e-publicação-5-etapas))* 
+- [x] **Módulo de Integração com LLM** (*recebe payload estruturado + `aiPromptTemplate` da fonte e retorna as variantes de copy*) — **Demanda 1.4, Sprint 1**
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#42-módulo-b--processamento-inteligente-ia--persistência))*
+- [x] **Geração das 3 Variantes de Copy** (*`messaging` para WhatsApp/Telegram, `social` para Instagram/TikTok, `article` para o site próprio*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#4-estrutura-da-copy-gerada-pela-ia))*
+- [x] **Garantia da Fronteira Arquitetural da IA** (*a IA nunca recebe HTML bruto para extrair nem é instruída a navegar — validação de contrato de entrada*)
+  *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 2)*
 
 ### Pendentes
-- [ ] **Módulo de Integração com LLM** (*recebe payload estruturado + `aiPromptTemplate` da fonte e retorna as variantes de copy*) — **Demanda 1.4, Sprint 1**
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#42-módulo-b--processamento-inteligente-ia--persistência))*
-- [ ] **Geração das 3 Variantes de Copy** (*`messaging` para WhatsApp/Telegram, `social` para Instagram/TikTok, `article` para o site próprio*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#4-estrutura-da-copy-gerada-pela-ia))*
-- [ ] **Garantia da Fronteira Arquitetural da IA** (*a IA nunca recebe HTML bruto para extrair nem é instruída a navegar — validação de contrato de entrada*)
-  *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 2)*
 - [ ] **Filtro Determinístico Pré-IA (Otimização de Custo)** (*descarte de ofertas irrelevantes antes de gastar tokens — desconto mínimo, faixa de preço, categoria; configurável por fonte*)
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#41-otimização-de-custo-de-ia--ponto-de-atenção))*
 
@@ -219,14 +219,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 - [ ] **Definir a estratégia de WhatsApp** (*modo exclusivamente assistido, ou adoção de biblioteca não-oficial com o risco de banimento aceito*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
-- [ ] **Definir o provedor e modelo de LLM** (*com o custo por oferta processada, insumo direto do modelo de custos*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#33-escolha-do-provedor))*
 - [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [ ] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 
 ### Concluídas
+- [x] **Definir o provedor e modelo de LLM** (*Definido uso da OpenAI com modelo `gpt-4o-mini` pelo custo/benefício no volume de ingestão e uso de Structured Outputs*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#33-escolha-do-provedor))*
 - [x] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job. O **cálculo** do instante de disparo e a decisão `SCHEDULED` vs `COMPLETED` já estão implementados em `dispatchScheduler.ts`, lendo o horizonte da coleção de ofertas; faltam a fila e o worker, que assumem `findDispatchHorizon()` e movem a oferta de `SCHEDULED` para `COMPLETED`*) — **Demanda 2.1, Sprint 2**
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [x] **Adoção de sub-ID por operador nos links de afiliado** (*transforma a atribuição de comissão de inferida em medida — ver limitações do cruzamento por SKU*)
