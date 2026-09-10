@@ -33,6 +33,62 @@ export const dispatchWorker = new Worker<DispatchJobData>(
       if (!existing || existing.status !== OfferStatus.COMPLETED) {
         throw new Error(`Oferta ${offerId} não encontrada ou em estado inválido para disparo.`);
       }
+      return { success: true, offerId, deliveryStatus: {} };
+    }
+
+    // 1. Reverificação de Preço e Disponibilidade
+    const { SourceModel } = await import('../../database/models/index.js');
+    const { IngestorFactory } = await import('../ingestion/ingestorFactory.js');
+    const { broadcastOfferStateChanged } = await import('../websocket/index.js');
+
+    const source = await SourceModel.findById(offer.sourceId);
+    if (source) {
+      const ingestor = IngestorFactory.create(source.type);
+      const latestOfferData = await ingestor.reverifyOffer(source, offer.externalSku, offer.originalUrl);
+
+      // Política de divergência: se esgotou ou preço mudou, aborta e devolve para OPEN.
+      if (!latestOfferData || latestOfferData.priceCurrent !== offer.priceCurrent) {
+        console.warn(`[Dispatch] Divergência detectada para a oferta ${offerId}. Preço atual: ${latestOfferData?.priceCurrent ?? 'Esgotado'}. Abortando disparo.`);
+
+        const updatedOffer = await OfferModel.findByIdAndUpdate(
+          offerId,
+          {
+            $set: {
+              status: OfferStatus.OPEN,
+              priceCurrent: latestOfferData?.priceCurrent ?? offer.priceCurrent,
+            },
+            $unset: {
+              operatorId: 1,
+              scheduledFor: 1,
+              selectedChannels: 1,
+              resolvedAt: 1,
+            },
+          },
+          { new: true }
+        ).lean();
+
+        if (updatedOffer) {
+          // Atualizar o DispatchLog como ABORTED_DUE_TO_DIVERGENCE
+          const channels = offer.selectedChannels ?? [];
+          const abortStatus = channels.reduce((acc, ch) => ({ ...acc, [ch]: 'ABORTED_DUE_TO_DIVERGENCE' }), {});
+
+          await DispatchLogModel.updateOne(
+            { offerId },
+            { $set: { deliveryStatus: abortStatus } }
+          );
+
+          // Emitir broadcast para retornar a oferta para a tela principal
+          broadcastOfferStateChanged({
+            offerId,
+            status: updatedOffer.status,
+            operatorId: '',
+            operatorName: '',
+            scheduledFor: null,
+          });
+
+          return { success: false, offerId, deliveryStatus: abortStatus, reason: 'Divergência de preço/disponibilidade' };
+        }
+      }
     }
 
     // TODO (Sprint 3): Aqui seriam invocados os drivers de canais.

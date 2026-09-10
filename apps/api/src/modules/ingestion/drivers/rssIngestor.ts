@@ -56,4 +56,12 @@ export class RssIngestor implements IngestorDriver {
       throw error;
     }
   }
+
+  public async reverifyOffer(source: SourceDocument, externalSku: string, _originalUrl: string): Promise<RawOffer | null> {
+    // Como feeds RSS costumam ser apenas uma URL que retorna tudo,
+    // buscamos tudo novamente e filtramos.
+    const offers = await this.fetchOffers(source);
+    const offer = offers.find(o => o.externalSku === externalSku);
+    return offer || null;
+  }
 }

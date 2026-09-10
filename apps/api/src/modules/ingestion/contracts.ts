@@ -19,4 +19,5 @@ export interface RawOffer {
  */
 export interface IngestorDriver {
   fetchOffers(source: SourceDocument): Promise<RawOffer[]>;
+  reverifyOffer(source: SourceDocument, externalSku: string, originalUrl: string): Promise<RawOffer | null>;
 }

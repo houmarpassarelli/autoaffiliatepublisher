@@ -255,3 +255,8 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 
 ## 2026-09-10 02:44 - Geração das 3 Variantes de Copy (Módulo IA)
 - **Contexto:** Implementar a integração com LLM para gerar as 3 variantes de copy (messaging, social, article) usando o OpenAI (gpt-4o-mini) garantindo retorno determinístico via JSON mode (Structured Outputs). Inclui também a criação da rota temporária/sob-demanda `/api/offers/:id/regenerate-copy` e integração no frontend.
+
+## 2026-09-10 03:20 - Reverificação de Preço e Disponibilidade Pré-Disparo
+- **Contexto:** Reverificação da oferta na origem logo antes de disparar pelo `dispatchWorker.ts`.
+- **Decisão (Política de Divergência):** Abortar o disparo, preencher `deliveryStatus` de cada canal selecionado com "ABORTED_DUE_TO_DIVERGENCE" no `DispatchLog`, limpar o agendamento (`operatorId`, `scheduledFor`, `selectedChannels`) da oferta e devolvê-la ao status `OPEN` atualizando o preço. Emitir evento `OFFER_STATE_CHANGED`.
+- **Implementação:** Extensão da `IngestorDriver` com o método `reverifyOffer`, e adição da validação no início do job de envio (`dispatchWorker.ts`).

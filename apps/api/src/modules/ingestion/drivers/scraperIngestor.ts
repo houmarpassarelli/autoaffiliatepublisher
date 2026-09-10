@@ -65,10 +65,11 @@ export class ScraperIngestor implements IngestorDriver {
     const rawOffers: RawOffer[] = [];
     
     // Seletores genéricos hipotéticos. Em ambiente real variam muito.
-    const productCards = $('.product-card, .item-card, article');
+    // 'main' e 'body' ajudam como fallback na reverificação isolada (página do produto).
+    const productCards = $('.product-card, .item-card, article, main, body');
     
     productCards.each((_, element) => {
-      const title = $(element).find('h2, h3, .title').text().trim();
+      const title = $(element).find('h1, h2, h3, .title').first().text().trim();
       let originalUrl = $(element).find('a').attr('href') || baseUrl;
       if (!originalUrl.startsWith('http')) {
         originalUrl = new URL(originalUrl, baseUrl).href;
@@ -76,8 +77,8 @@ export class ScraperIngestor implements IngestorDriver {
       
       const imageUrl = $(element).find('img').attr('src') || '';
       
-      const priceStr = $(element).find('.price, .current-price').text();
-      const oldPriceStr = $(element).find('.old-price, .original-price').text();
+      const priceStr = $(element).find('.price, .current-price, [data-price]').first().text();
+      const oldPriceStr = $(element).find('.old-price, .original-price, s').first().text();
       
       const priceCurrent = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
       let priceOriginal = parseFloat(oldPriceStr.replace(/[^0-9.]/g, '')) || 0;
@@ -85,6 +86,7 @@ export class ScraperIngestor implements IngestorDriver {
 
       const externalSku = $(element).attr('data-id') || $(element).attr('data-sku') || String(Date.now());
 
+      // Na reverificação de fallback pela tag body, title pode vir sujo, mas validamos se preço existe.
       if (title && priceCurrent > 0) {
         rawOffers.push({
           externalSku,
@@ -98,5 +100,26 @@ export class ScraperIngestor implements IngestorDriver {
     });
 
     return rawOffers;
+  }
+
+  public async reverifyOffer(source: SourceDocument, _externalSku: string, originalUrl: string): Promise<RawOffer | null> {
+    try {
+      const pseudoSource = { ...source, url: originalUrl } as SourceDocument;
+      let offers: RawOffer[] = [];
+      const useDynamicRendering = source.url.includes('dynamic=true') || true;
+
+      if (useDynamicRendering) {
+        offers = await this.fetchDynamic(pseudoSource);
+      } else {
+        offers = await this.fetchStatic(pseudoSource);
+      }
+      
+      // Retorna a oferta se encontrou e o preço for válido. 
+      // Não confia cegamente no SKU retornado porque a página do produto pode não ter as mesmas tags de listagem.
+      return offers[0] || null;
+    } catch (error) {
+      console.error(`Falha ao reverificar oferta ${originalUrl} via Scraper:`, error);
+      return null;
+    }
   }
 }

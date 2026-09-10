@@ -31,7 +31,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [x] **Deduplicação por `dedupeHash` e SKU** (*hash SHA-256 da URL canônica; itens já capturados ou `DISCARDED` são ignorados na ingestão*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
-
+- [x] **Reverificação de Preço e Disponibilidade Pré-Disparo** (*aborta o disparo se o produto esgotou ou o preço mudou — política de divergência a definir*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#92-verificação-pré-disparo))*
 
 ### Pendentes
 - [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
@@ -39,8 +40,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 
 - [ ] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
-- [ ] **Reverificação de Preço e Disponibilidade Pré-Disparo** (*aborta o disparo se o produto esgotou ou o preço mudou — política de divergência a definir*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#92-verificação-pré-disparo))*
 
 ---
 
@@ -211,8 +210,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [ ] **Definir se o descarte deve pedir confirmação** (*`DISCARDED` é terminal e bloqueia o produto permanentemente na deduplicação da ingestão; hoje um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade de 5 a 10 segundos por decisão*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
-- [ ] **Definir a política de divergência de preço na reverificação pré-disparo** (*abortar e devolver a `OPEN`, ou disparar com o preço atualizado*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#82-reverificação-antes-do-disparo))*
 - [ ] **Definir o método de criptografia das credenciais em banco**
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Definir a estratégia de exposição segura do Dashboard Remoto** (*VPN, túnel reverso ou proxy com autenticação — o sistema não tem autenticação própria*)
@@ -225,6 +222,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 
 ### Concluídas
+- [x] **Definir a política de divergência de preço na reverificação pré-disparo** (*Decidido: Abortar disparo em caso de mudança de preço ou esgotamento. A oferta tem `operatorId`, `scheduledFor` e canais limpos, retornando ao estado `OPEN` com novo preço para recadastro da copy. `DispatchLog` recebe `ABORTED_DUE_TO_DIVERGENCE`*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#82-reverificação-antes-do-disparo))*
 - [x] **Definir o provedor e modelo de LLM** (*Definido uso da OpenAI com modelo `gpt-4o-mini` pelo custo/benefício no volume de ingestão e uso de Structured Outputs*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#33-escolha-do-provedor))*
 - [x] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job. O **cálculo** do instante de disparo e a decisão `SCHEDULED` vs `COMPLETED` já estão implementados em `dispatchScheduler.ts`, lendo o horizonte da coleção de ofertas; faltam a fila e o worker, que assumem `findDispatchHorizon()` e movem a oferta de `SCHEDULED` para `COMPLETED`*) — **Demanda 2.1, Sprint 2**

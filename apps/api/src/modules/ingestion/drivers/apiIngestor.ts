@@ -41,4 +41,12 @@ export class ApiIngestor implements IngestorDriver {
       throw error;
     }
   }
+
+  public async reverifyOffer(source: SourceDocument, externalSku: string, _originalUrl: string): Promise<RawOffer | null> {
+    // Como a API genérica não sabemos se tem rota de detalhes,
+    // buscamos tudo e filtramos.
+    const offers = await this.fetchOffers(source);
+    const offer = offers.find(o => o.externalSku === externalSku);
+    return offer || null;
+  }
 }

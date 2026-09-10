@@ -700,3 +700,11 @@ Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs d
   - Criação de `aiService.ts` forçando o retorno estruturado (Structured Outputs - `response_format`) e compondo as restrições da IA (sem envio de HTML).
   - Atualização do mock `regenerateOfferCopy` no serviço de resolução de ofertas para interagir com o novo `aiService` resgatando o `aiPromptTemplate` nativo da fonte geradora.
   - O fluxo de Regeneração já estava integrado ao Dashboard Remoto (Thin Client).
+
+## 2026-09-10 03:22 - Reverificação de Preço e Disponibilidade Pré-Disparo
+- **Contexto:** Execução do fluxo de reverificação da oferta logo antes da etapa de envio aos drivers, dentro do `dispatchWorker`.
+- **Implementação:**
+  - Inclusão do contrato `reverifyOffer` na interface `IngestorDriver`.
+  - Implementação concreta do `reverifyOffer` no `ApiIngestor`, `RssIngestor` e `ScraperIngestor`.
+  - Modificação do `dispatchWorker` para instanciar a fonte e validar o preço e disponibilidade imediatamente antes do disparo.
+  - Aborto em caso de divergência: reseta o status para `OPEN`, atualiza o `priceCurrent`, anota `"ABORTED_DUE_TO_DIVERGENCE"` no `deliveryStatus` do `DispatchLog` e notifica via WebSocket (`OFFER_STATE_CHANGED`), removendo as propriedades de roteamento e de trava para devolvê-la intacta à fase de curadoria.
