@@ -249,3 +249,6 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
    - **RSS:** Leitor de feed XML que extrai os itens usando Axios e Cheerio.
    - **Scraper:** Motor híbrido que usa Playwright para páginas dinâmicas e Cheerio para estáticas.
 4. **Fábrica:** `ingestorFactory.ts` que roteia a solicitação do worker para a instância adequada, baseado no `SourceType`.
+
+## 2026-09-10 02:35 - Deduplicação por dedupeHash e SKU
+- **Contexto:** Implementar a lógica de deduplicação na ingestão para garantir que ofertas já capturadas ou descartadas (`DISCARDED`) sejam ignoradas. A deduplicação utilizará o hash SHA-256 da URL canônica da oferta e a combinação de `externalSku` com `sourceId`.

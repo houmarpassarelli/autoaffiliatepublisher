@@ -675,3 +675,19 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 2026-09-10.
 ### 4. Validações executadas
 - Tipagem (com *typecheck*) passou com sucesso.
 - Cobertura de tipagem estrita para importação de entidades apenas de tipo (`import type { ... }`).
+
+## 2026-09-10 — Demanda de Ingestão: Deduplicação por dedupeHash e SKU
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026, 02:35.
+
+### 1. Novo Serviço de Deduplicação
+
+Criado `apps/api/src/modules/ingestion/deduplicationService.ts` contendo as funções de normalização, hash e verificação no banco.
+
+- `canonicalizeUrl(url: string)`: responsável por limpar parâmetros de rastreamento conhecidos (utm_*, ref, gclid, etc.), remover o hash (âncora) e ordenar os parâmetros restantes, garantindo uma URL consistente que representa univocamente o produto.
+- `generateDedupeHash(url: string)`: aplica SHA-256 à URL retornada pela função de canonicalização, gerando o hash hexadecimal que atua como chave de bloqueio primário.
+- `filterNewOffers(rawOffers: RawOffer[], sourceId: ObjectId)`: orquestra a consulta em lote. O banco de dados é atingido uma única vez com a cláusula `$or` verificando tanto o lote de hashes quanto os pares de SKU + Fonte. Todos os status (`OPEN`, `SCHEDULED`, `COMPLETED`, `DISCARDED`) são desconsiderados, respeitando a regra de ignorar itens já coletados em sua integridade.
+
+### 2. Validações Executadas
+
+Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs de `contracts.ts` e do Schema Mongoose existente. As lógicas respeitam as especificações do `ESPECS_TECNICAS.md`, Seção 8.1.

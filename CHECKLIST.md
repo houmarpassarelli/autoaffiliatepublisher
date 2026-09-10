@@ -29,13 +29,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#12-redes-de-afiliados--feeds-de-produto))*
 - [x] **Ingestor tipo `SCRAPER`** (*raspagem dirigida com Cheerio/Axios para páginas estáticas e Playwright para páginas dinâmicas*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
+- [x] **Deduplicação por `dedupeHash` e SKU** (*hash SHA-256 da URL canônica; itens já capturados ou `DISCARDED` são ignorados na ingestão*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
+
 
 ### Pendentes
 - [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#41-módulo-a--ingestão-e-raspagem-worker))*
 
-- [ ] **Deduplicação por `dedupeHash` e SKU** (*hash SHA-256 da URL canônica; itens já capturados ou `DISCARDED` são ignorados na ingestão*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
 - [ ] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 - [ ] **Reverificação de Preço e Disponibilidade Pré-Disparo** (*aborta o disparo se o produto esgotou ou o preço mudou — política de divergência a definir*)
