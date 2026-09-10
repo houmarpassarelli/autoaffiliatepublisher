@@ -5,6 +5,7 @@ import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
 import { ensureIndexes } from './database/models/index.js';
 import { resetPresence, shutdownWebsocketModule } from './modules/websocket/index.js';
+import { shutdownQueues } from './modules/queues/index.js';
 import { buildApp } from './server/app.js';
 
 /**
@@ -52,6 +53,7 @@ function registerShutdownHandlers(app: FastifyInstance): void {
 
         try {
           shutdownWebsocketModule();
+          await shutdownQueues();
           await app.close();
           await disconnectRedis();
           await disconnectDatabase();

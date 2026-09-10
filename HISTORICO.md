@@ -216,3 +216,22 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 2. **Finalização:**
    - Adição da cobertura e relato no `DEVLOG.md`.
    - Marcação no `CHECKLIST.md` movendo o item de "Pendentes" para "Implementados no Código".
+
+## 2026-09-10 — Fila BullMQ de Disparos com Delay Progressivo
+
+**Contexto:** O usuário exigiu a execução da Demanda 2.1 (Fila de Disparos via BullMQ) com o comando direto "EXECUTE O DESENVOLVIMENTO", sem ideação.
+
+**Escopo da Implementação (Execução Direta):**
+
+1. **Configuração BullMQ:**
+   - Criação do `dispatchQueue` (`apps/api/src/modules/queues/dispatchQueue.ts`) conectando ao Redis local usando as credenciais do `config.ts`.
+   - Adaptação de `findDispatchHorizon` em `dispatchScheduler.ts` para ler os últimos jobs (`getDelayed`, `getWaiting`, `getActive`) da fila BullMQ para determinar o último `timestamp` reservado em vez de apenas ler o banco de dados.
+2. **Integração no Serviço de Resolução:**
+   - Em `offerResolutionService.ts`, após gravar a transição e a auditoria, a oferta será enfileirada (`dispatchQueue.add`) com o `delay` calculado.
+3. **Worker de Disparo:**
+   - Criação de `dispatchWorker.ts` processando a fila.
+   - O Worker atualizará o status da oferta de `SCHEDULED` para `COMPLETED` quando o tempo chegar.
+   - O Worker fará o broadcast `OFFER_PUBLISHED` via WebSocket para atualizar a UI.
+4. **Atualização da Inicialização:**
+   - Injetar o worker no ciclo de vida do Fastify (`server.ts` ou `main.ts`).
+   - Finalização com registros no `DEVLOG.md` e atualização do `CHECKLIST.md`.

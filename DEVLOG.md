@@ -637,3 +637,19 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
 - O serviço `offerResolutionService.ts` (na ação `dispatchOffer`) intercepta a oferta em fase de resolução, injeta o ID do operador na `affiliateUrl` da oferta e utiliza `replaceUrlInCopy` para espelhar a alteração para todos os textos de copy gerados.
 - A auditoria em `DispatchLog` passa a gravar a URL com o tracking já embutido (viabilizando o cruzamento exato planejado no `MONETIZACAO.md`).
 - A interface remota (`OfferCard.tsx`) também foi atualizada para injetar o parâmetro antes de copiar o texto para a Área de Transferência.
+
+---
+
+## 2026-09-10 — Fila BullMQ de Disparos com Delay Progressivo
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
+
+### Setup do Módulo `queues`
+
+- Instalação de `bullmq` no pacote `@aap/api`.
+- Criação de `redisClient.ts` consumindo o construtor isolado de cliente Redis da aplicação, garantindo instâncias exclusivas para Worker/Queue (exigência do BullMQ para não misturar conexões bloqueantes).
+- Configuração de `dispatchQueue.ts` com fila atrelada a `DISPATCH_OFFER` e backoff exponencial base (5s, 10s, 20s).
+- Criação de `dispatchWorker.ts` que processa a oferta, transita de `SCHEDULED` para `COMPLETED` no MongoDB (quando a oferta não for descarte) e já simula a auditoria atualizando `DispatchLog`.
+- O broadcast de `OFFER_PUBLISHED` é acionado pelo Worker, garantindo a atualização das abas `Concluídas` na UI.
+- `offerResolutionService.ts` ajustado para empurrar o job pra fila informando o `delay` calculado pelo `dispatchScheduler.ts` logo após marcar no BD.
+- Desligamento limpo configurado em `main.ts` garantindo que Workers parem graciosamente num `SIGTERM`/`SIGINT`.

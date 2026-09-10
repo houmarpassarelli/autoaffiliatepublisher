@@ -166,8 +166,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
 
 ### Pendentes
-- [ ] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job. O **cálculo** do instante de disparo e a decisão `SCHEDULED` vs `COMPLETED` já estão implementados em `dispatchScheduler.ts`, lendo o horizonte da coleção de ofertas; faltam a fila e o worker, que assumem `findDispatchHorizon()` e movem a oferta de `SCHEDULED` para `COMPLETED`*) — **Demanda 2.1, Sprint 2**
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [ ] **Driver Telegram** (*Bot API — automação total, disparo imediato*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#4-apis-de-publicação-por-canal))*
 - [ ] **Driver Site Próprio** (*publicação via API interna do CMS ou escrita direta em banco*)
@@ -227,6 +225,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 
 ### Concluídas
+- [x] **Fila BullMQ de Disparos com Delay Progressivo** (*fila vazia dispara imediato; fila ocupada escalona a partir do último job. O **cálculo** do instante de disparo e a decisão `SCHEDULED` vs `COMPLETED` já estão implementados em `dispatchScheduler.ts`, lendo o horizonte da coleção de ofertas; faltam a fila e o worker, que assumem `findDispatchHorizon()` e movem a oferta de `SCHEDULED` para `COMPLETED`*) — **Demanda 2.1, Sprint 2**
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [x] **Adoção de sub-ID por operador nos links de afiliado** (*transforma a atribuição de comissão de inferida em medida — ver limitações do cruzamento por SKU*)
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 - [x] **Divergência entre a fórmula do delay e a regra do delay, resolvida a favor da regra** (*o trecho de código do `ESPECS_TECNICAS.md`, Seção 7, contradiz o `ARQUITETURA.md`, Seção 7, e o `FLUXO_OPERACIONAL.md`, Seção 9.1, quando o último disparo já foi processado. Adotada a regra: **nenhum disparo acontece a menos de Δ do anterior**, com o horizonte "vencido" significando "a janela de Δ já se esgotou". Decorre daí que a oferta de disparo imediato também grava `scheduledFor`*)

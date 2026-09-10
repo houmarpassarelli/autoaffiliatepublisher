@@ -230,6 +230,15 @@ export async function dispatchOffer(
   await claimed.save();
   await recordDispatchLog(claimed, operator, command);
 
+  const { dispatchQueue } = await import('../queues/dispatchQueue.js');
+  const delay = Math.max(0, dispatchTime.getTime() - Date.now());
+  
+  await dispatchQueue.add(
+    'DISPATCH_OFFER',
+    { offerId, channels: command.channels, operatorId: command.operatorId, actionType: command.actionType },
+    { delay }
+  );
+
   return announceResolution(claimed, operator.name);
 }
 
