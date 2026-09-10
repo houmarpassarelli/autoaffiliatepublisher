@@ -611,3 +611,16 @@ Foram implementados dois novos botões de interação direta no card de ofertas 
 - Rota adicionada em `offerRoutes.ts`: `POST /api/offers/:id/regenerate`.
 - O método em `offerResolutionService.ts` garante que apenas ofertas em estado `OPEN` possam sofrer regeneração e salva a mutação no banco, sem envio de broadcast de atualização de texto na fila global.
 - Uma vez que o módulo de LLM (Demanda 1.4) está pendente, a implementação altera todas as chaves (messaging, social, article) e concatena uma marca `[Regenerada pela IA]` na copy original da oferta no MongoDB. Trata adequadamente quando `offer.aiCopy` é instanciado em modo Map do Mongoose.
+
+---
+
+## 2026-09-10 — Serviço de Conversão de Link de Afiliado
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
+
+### Implementação do Serviço (`affiliateLinkService.ts`)
+
+- Criado o arquivo e módulo dentro de `apps/api/src/modules/ingestion/`.
+- A função `convertCanonicalToAffiliateUrl` injeta apropriadamente os parâmetros de query string na URL base, convertendo-a num link rastreável pronto para uso nos drivers de disparo.
+- Utilizou-se detecção baseada no host (`amazon`, `aliexpress`, `shopee`, `mercadolivre`), preservando flexibilidade com uma alternativa genérica (fallback via `affiliate_id`).
+- Resiliente: se a URL fornecida for malformada, o parser do Node.js estouraria uma exceção fatal. Foi inserido um try-catch para retornar a URL bruta num eventual insucesso sem derrubar a pipeline de processamento (etapa 1).

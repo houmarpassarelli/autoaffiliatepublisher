@@ -21,7 +21,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 1. 🕷️ Fluxo de Ingestão e Coleta de Ofertas
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Serviço de Conversão de Link de Afiliado** (*converte a URL do produto na URL rastreada usando a `affiliateTag` da fonte*)
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#3-pipeline-de-ingestão-e-publicação-5-etapas))* 
 
 ### Pendentes
 - [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
@@ -32,8 +33,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#12-redes-de-afiliados--feeds-de-produto))*
 - [ ] **Ingestor tipo `SCRAPER`** (*raspagem dirigida com Cheerio/Axios para páginas estáticas e Playwright para páginas dinâmicas*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
-- [ ] **Serviço de Conversão de Link de Afiliado** (*converte a URL do produto na URL rastreada usando a `affiliateTag` da fonte*)
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#3-pipeline-de-ingestão-e-publicação-5-etapas))*
 - [ ] **Deduplicação por `dedupeHash` e SKU** (*hash SHA-256 da URL canônica; itens já capturados ou `DISCARDED` são ignorados na ingestão*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
 - [ ] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
@@ -47,7 +46,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 2. 🤖 Fluxo de Processamento Inteligente (IA)
 
 ### Implementados no Código
-*(nenhum item — projeto em fase de especificação)*
+- [x] **Serviço de Conversão de Link de Afiliado** (*converte a URL do produto na URL rastreada usando a `affiliateTag` da fonte*)
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#3-pipeline-de-ingestão-e-publicação-5-etapas))* 
 
 ### Pendentes
 - [ ] **Módulo de Integração com LLM** (*recebe payload estruturado + `aiPromptTemplate` da fonte e retorna as variantes de copy*) — **Demanda 1.4, Sprint 1**

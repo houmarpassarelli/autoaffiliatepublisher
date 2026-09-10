@@ -202,3 +202,17 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 3. **Backend (`apps/api`):** Criação da rota temporária `POST /api/offers/:id/regenerate`, simulando a chamada de LLM ao anexar texto de regeneração nas copys existentes, até que a Demanda 1.4 seja construída.
 
 **Decisões:** O `regenerate` não emitirá evento no WebSocket por enquanto, já que não há `OFFER_UPDATED` especificado no contrato atual; a própria requisição HTTP devolve o novo `OfferDto` ao autor do comando para renderização imediata.
+
+## 2026-09-10 — 01:40 — Serviço de Conversão de Link de Afiliado
+
+**Contexto:** O solicitante enviou a instrução "EXECUTE O DESENVOLVIMENTO" para o Serviço de Conversão de Link de Afiliado, exigindo registro prévio do plano e, em seguida, a execução.
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Criação do Serviço de Conversão:**
+   - Será criado o arquivo `apps/api/src/modules/ingestion/affiliateLinkService.ts`.
+   - Conterá a função `convertCanonicalToAffiliateUrl(canonicalUrl: string, affiliateTag: string): string`.
+   - Utilizará a API padrão `URL` do Node.js para identificar o *hostname* e injetar a tag de forma contextual (ex.: `tag=` para Amazon, `aff_short_key=` para AliExpress, `aff_siteid=` para Shopee, `affiliate_id=` como genérico).
+2. **Finalização:**
+   - Adição da cobertura e relato no `DEVLOG.md`.
+   - Marcação no `CHECKLIST.md` movendo o item de "Pendentes" para "Implementados no Código".
