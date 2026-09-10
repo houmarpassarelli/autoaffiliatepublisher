@@ -202,6 +202,32 @@ export async function dispatchOffer(
     resolvedAt: new Date(),
   });
 
+  const { injectOperatorSubId, replaceUrlInCopy } = await import('@aap/shared');
+  const trackedUrl = injectOperatorSubId(claimed.affiliateUrl, operator._id.toString());
+  const baseUrl = claimed.affiliateUrl;
+  
+  claimed.affiliateUrl = trackedUrl;
+  
+  const aiCopyMap = claimed.aiCopy as unknown as Map<string, string>;
+  if (aiCopyMap instanceof Map) {
+    const formats = ['messaging', 'social', 'article'];
+    for (const format of formats) {
+      if (aiCopyMap.has(format)) {
+        const originalText = aiCopyMap.get(format) ?? '';
+        aiCopyMap.set(format, replaceUrlInCopy(originalText, baseUrl, trackedUrl));
+      }
+    }
+  } else if (typeof claimed.aiCopy === 'object') {
+    const aiCopyObj = claimed.aiCopy as Record<string, string>;
+    const formats = ['messaging', 'social', 'article'];
+    for (const format of formats) {
+      if (aiCopyObj[format]) {
+        aiCopyObj[format] = replaceUrlInCopy(aiCopyObj[format], baseUrl, trackedUrl);
+      }
+    }
+  }
+
+  await claimed.save();
   await recordDispatchLog(claimed, operator, command);
 
   return announceResolution(claimed, operator.name);

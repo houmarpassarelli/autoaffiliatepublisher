@@ -624,3 +624,16 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
 - A função `convertCanonicalToAffiliateUrl` injeta apropriadamente os parâmetros de query string na URL base, convertendo-a num link rastreável pronto para uso nos drivers de disparo.
 - Utilizou-se detecção baseada no host (`amazon`, `aliexpress`, `shopee`, `mercadolivre`), preservando flexibilidade com uma alternativa genérica (fallback via `affiliate_id`).
 - Resiliente: se a URL fornecida for malformada, o parser do Node.js estouraria uma exceção fatal. Foi inserido um try-catch para retornar a URL bruta num eventual insucesso sem derrubar a pipeline de processamento (etapa 1).
+
+---
+
+## 2026-09-10 — Adoção de sub-ID por Operador nos Links de Afiliado
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
+
+### Implementação da Injeção de Rastreamento Secundário
+
+- Criado o utilitário `injectOperatorSubId` em `packages/shared/src/utils/affiliateLink.ts`, que identifica plataformas (AliExpress, Shopee, Awin, genérico) e adiciona um parâmetro `subid` (ou semelhante) contendo o ID do operador.
+- O serviço `offerResolutionService.ts` (na ação `dispatchOffer`) intercepta a oferta em fase de resolução, injeta o ID do operador na `affiliateUrl` da oferta e utiliza `replaceUrlInCopy` para espelhar a alteração para todos os textos de copy gerados.
+- A auditoria em `DispatchLog` passa a gravar a URL com o tracking já embutido (viabilizando o cruzamento exato planejado no `MONETIZACAO.md`).
+- A interface remota (`OfferCard.tsx`) também foi atualizada para injetar o parâmetro antes de copiar o texto para a Área de Transferência.

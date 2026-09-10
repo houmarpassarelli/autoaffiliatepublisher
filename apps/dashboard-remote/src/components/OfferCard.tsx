@@ -153,7 +153,10 @@ export function OfferCard({
   function handleCopyAndDispatch(): void {
     void runResolution('copy', async () => {
       try {
-        await navigator.clipboard.writeText(offer.aiCopy.messaging);
+        const { injectOperatorSubId, replaceUrlInCopy } = await import('@aap/shared');
+        const trackedUrl = injectOperatorSubId(offer.affiliateUrl, operator.id);
+        const copyWithSubId = replaceUrlInCopy(offer.aiCopy.messaging, offer.affiliateUrl, trackedUrl);
+        await navigator.clipboard.writeText(copyWithSubId);
       } catch (err) {
         throw new Error('Não foi possível copiar para a área de transferência.', { cause: err });
       }

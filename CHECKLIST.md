@@ -225,10 +225,10 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [ ] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
-- [ ] **Avaliar adoção de sub-ID por operador nos links de afiliado** (*transforma a atribuição de comissão de inferida em medida — ver limitações do cruzamento por SKU*)
-  *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 
 ### Concluídas
+- [x] **Adoção de sub-ID por operador nos links de afiliado** (*transforma a atribuição de comissão de inferida em medida — ver limitações do cruzamento por SKU*)
+  *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#33-limitações-conhecidas-do-modelo))*
 - [x] **Divergência entre a fórmula do delay e a regra do delay, resolvida a favor da regra** (*o trecho de código do `ESPECS_TECNICAS.md`, Seção 7, contradiz o `ARQUITETURA.md`, Seção 7, e o `FLUXO_OPERACIONAL.md`, Seção 9.1, quando o último disparo já foi processado. Adotada a regra: **nenhum disparo acontece a menos de Δ do anterior**, com o horizonte "vencido" significando "a janela de Δ já se esgotou". Decorre daí que a oferta de disparo imediato também grava `scheduledFor`*)
   *(Decidido em 09/09/2026 — ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md). A atualização do trecho no `ESPECS_TECNICAS.md` pertence ao Fluxo 2)*
 - [x] **Reconciliação de presença órfã implementada** (*duas salvaguardas: varredor de heartbeat com janela em `WEBSOCKET_HEARTBEAT_TIMEOUT_MS` para queda de rede sem `close` limpo, e reset de presenças no bootstrap para morte abrupta do processo*)
