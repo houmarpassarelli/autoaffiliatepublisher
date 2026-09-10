@@ -653,3 +653,25 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
 - O broadcast de `OFFER_PUBLISHED` é acionado pelo Worker, garantindo a atualização das abas `Concluídas` na UI.
 - `offerResolutionService.ts` ajustado para empurrar o job pra fila informando o `delay` calculado pelo `dispatchScheduler.ts` logo após marcar no BD.
 - Desligamento limpo configurado em `main.ts` garantindo que Workers parem graciosamente num `SIGTERM`/`SIGINT`.
+
+---
+
+## 2026-09-10 — Demanda 1.3 (Parcial): Ingestores de API, RSS e Scraper
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 2026-09-10.
+
+### 1. Dependências e Estrutura
+- Instalados `axios`, `cheerio` e `playwright` no workspace `apps/api`.
+- Adicionado tipo bruto de oferta `RawOffer` e a interface base `IngestorDriver` em `contracts.ts` (tipagem pura respeitando `verbatimModuleSyntax`).
+
+### 2. Implementação dos Drivers
+- **ApiIngestor:** Cliente genérico via Axios. Os *headers* são construídos iterando pelas credenciais fornecidas no `Map` configurado na fonte, injetando chaves específicas que as APIs exigem para autenticação.
+- **RssIngestor:** Leitor de feed de afiliados. Usa Axios para buscar o XML e `cheerio` (com `xmlMode: true`) para percorrer as tags de produto (tentando `<item>` e `<entry>`) extraindo atributos comuns.
+- **ScraperIngestor:** Solução híbrida focada em páginas completas sem APIs. Permite varredura estática (`axios` + `cheerio`) ou dinâmica (com headless browser pelo `playwright`) para garantir acesso a SPAs. 
+
+### 3. Fábrica (Factory)
+- Criada a `IngestorFactory` para abstrair a decisão. Com base no `SourceType` (API, RSS, SCRAPER), o worker (ainda a ser implementado por completo na continuação da Demanda 1.3) solicitará a instância apropriada por injeção de dependência simplificada.
+
+### 4. Validações executadas
+- Tipagem (com *typecheck*) passou com sucesso.
+- Cobertura de tipagem estrita para importação de entidades apenas de tipo (`import type { ... }`).

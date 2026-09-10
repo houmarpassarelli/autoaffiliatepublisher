@@ -235,3 +235,17 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 4. **Atualização da Inicialização:**
    - Injetar o worker no ciclo de vida do Fastify (`server.ts` ou `main.ts`).
    - Finalização com registros no `DEVLOG.md` e atualização do `CHECKLIST.md`.
+
+## 2026-09-10 — Demanda 1.3 (Parcial): Ingestor API, RSS e Scraper (Playwright/Cheerio)
+
+**Contexto:** O solicitante exigiu a execução do desenvolvimento dos ingestores de coleta, os quais representam a entrada de ofertas no sistema (Demanda 1.3). 
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Dependências:** Instalação de `axios`, `cheerio` e `playwright` no workspace `apps/api`.
+2. **Contratos:** Definição da interface `IngestorDriver` em `contracts.ts`, que recebe a fonte e devolve os dados brutos como `RawOffer`.
+3. **Drivers:**
+   - **API:** Cliente genérico via Axios, configurado pelas credenciais cadastradas.
+   - **RSS:** Leitor de feed XML que extrai os itens usando Axios e Cheerio.
+   - **Scraper:** Motor híbrido que usa Playwright para páginas dinâmicas e Cheerio para estáticas.
+4. **Fábrica:** `ingestorFactory.ts` que roteia a solicitação do worker para a instância adequada, baseado no `SourceType`.

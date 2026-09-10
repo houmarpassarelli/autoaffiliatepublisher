@@ -3,7 +3,7 @@
 As regras abaixo são de prioridade máxima. Siga-as estritamente em todas as interações.
 
 ## 1. Restrições e Regras Gerais
-- **Controle de Versão:** **NÃO** crie branches, não faça commits, nem realize `pull` ou `push` sem o pedido explícito do solicitante.
+- **Controle de Versão:** **NÃO** crie branches. Os comandos **git add** e **git commit** **NÃO** devem ser executados sem permissão, nem realize `pull` ou `push` sem o pedido explícito do solicitante.
 - **Qualidade de Código:** **NÃO** crie gambiarras ou soluções que fujam da arquitetura atual. É **OBRIGATÓRIO** escrever códigos claros, alinhados com as padronizações do projeto e com nível de qualidade de mercado e em inglês.
 - **Idioma:** É **OBRIGATÓRIO** o uso de comentários em Português do Brasil (pt-BR) em funções, métodos, classes e fluxos lógicos, schemas e objetos de schemas, explicando claramente o propósito de cada bloco.
 
@@ -41,7 +41,3 @@ Nenhuma alteração de arquivo ou código deve ser feita sem aprovação prévia
 Após a implementação e validação do código, as seguintes etapas são obrigatórias:
 - **Atualizar `DEVLOG.md`:** Registre detalhadamente o que foi atualizado ou criado na sessão.
 - **Atualizar `CHECKLIST.md`:** Marque a task referenciada como concluída e mova-a para a seção *"Implementados no Código"*, respeitando sua devida categoria/segmento.
-
-## 8. Regras
-Essas regras devem ser seguidas de forma majoritária, inegociável e questionável:
-- **Não executar certos comandos git sem autorização:** Os comandos **git add** e **git commit** NÃO devem ser executados sem permissão. Comandos para leitura de commits pode ser executado. Os comandos **git log** e **git status**, podem ser executados.

@@ -23,16 +23,17 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Implementados no Código
 - [x] **Serviço de Conversão de Link de Afiliado** (*converte a URL do produto na URL rastreada usando a `affiliateTag` da fonte*)
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#3-pipeline-de-ingestão-e-publicação-5-etapas))* 
+- [x] **Ingestor tipo `API`** (*cliente genérico de API de afiliados com credenciais por fonte — caminho preferencial de coleta*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#11-apis-oficiais--caminho-preferencial))*
+- [x] **Ingestor tipo `RSS`** (*leitor de feeds XML/RSS/CSV das redes de afiliados — Awin, Rakuten, Lomadee*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#12-redes-de-afiliados--feeds-de-produto))*
+- [x] **Ingestor tipo `SCRAPER`** (*raspagem dirigida com Cheerio/Axios para páginas estáticas e Playwright para páginas dinâmicas*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 
 ### Pendentes
 - [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#41-módulo-a--ingestão-e-raspagem-worker))*
-- [ ] **Ingestor tipo `API`** (*cliente genérico de API de afiliados com credenciais por fonte — caminho preferencial de coleta*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#11-apis-oficiais--caminho-preferencial))*
-- [ ] **Ingestor tipo `RSS`** (*leitor de feeds XML/RSS/CSV das redes de afiliados — Awin, Rakuten, Lomadee*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#12-redes-de-afiliados--feeds-de-produto))*
-- [ ] **Ingestor tipo `SCRAPER`** (*raspagem dirigida com Cheerio/Axios para páginas estáticas e Playwright para páginas dinâmicas*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
+
 - [ ] **Deduplicação por `dedupeHash` e SKU** (*hash SHA-256 da URL canônica; itens já capturados ou `DISCARDED` são ignorados na ingestão*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
 - [ ] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
