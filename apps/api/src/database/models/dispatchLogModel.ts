@@ -59,6 +59,15 @@ dispatchLogSchema.index({ operatorId: 1, dispatchedAt: -1 });
 // Cruzamento com os relatórios de venda das plataformas de afiliados.
 dispatchLogSchema.index({ productSku: 1 });
 
+// Filtro por loja de origem. Compostos com `dispatchedAt` porque a listagem é
+// sempre ordenada por ele: sem o segundo campo, o filtro usaria o índice e a
+// ordenação cairia em varredura.
+dispatchLogSchema.index({ sourceName: 1, dispatchedAt: -1 });
+
+// Filtro por canal de destino. `channels` é array — o MongoDB indexa cada
+// elemento, de modo que a busca pela chave de um canal usa o índice.
+dispatchLogSchema.index({ channels: 1, dispatchedAt: -1 });
+
 export const DispatchLogModel: Model<DispatchLogAttributes> = model<DispatchLogAttributes>(
   'DispatchLog',
   dispatchLogSchema,

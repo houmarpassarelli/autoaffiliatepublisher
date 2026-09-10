@@ -462,3 +462,133 @@ Os dados de verificação foram removidos do banco (as cinco coleções voltaram
 - **`POST /api/sources/:id/run`** e o **Painel de Auditoria de Disparos** permanecem pendentes na Categoria 4.
 - **Cadastro de operador não tem evento de broadcast.** Um operador criado enquanto a tela-portão está aberta só aparece na recarga da lista ou na reconexão. Criar um sétimo evento alteraria o catálogo do `ESPECS_TECNICAS.md` e não foi feito sem decisão do solicitante.
 - **Divergência estrutural**: o `ARQUITETURA.md`, Seção 8, enumera os módulos de `apps/api/src/modules`. Esta execução acrescenta `sources/`, somando-se a `offers/` e `channels/` da sessão anterior. A atualização daquele documento, e a da tabela de rotas da Seção 9 do `ESPECS_TECNICAS.md` com `/api/channels/active`, pertencem ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`).
+
+---
+
+## 2026-09-09 — Painel de Auditoria de Disparos
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 09/09/2026, 23:45.
+
+### 1. Este item era de leitura, não de gravação
+
+O `DispatchLogModel` já desnormalizava `operatorName`, `offerTitle` e `sourceName`, com o comentário registrando o motivo: *"evita join na listagem da auditoria"*. As sete colunas pedidas saem de **um único documento**, sem `populate` e sem consulta por linha. Uma decisão tomada duas sessões atrás pagou aqui — o trabalho foi a consulta, os filtros e a tela.
+
+### 2. Os quatro filtros não são o mesmo tipo de filtro
+
+Dois filtram por identidade, dois por texto congelado, e isso decidiu de onde vem cada lista de opções:
+
+| Filtro | Campo | Natureza | Opções vêm de |
+| :--- | :--- | :--- | :--- |
+| Operador | `operatorId` | ObjectId | Cadastro de operadores |
+| Canal | `channels` | Chave, casada contra elemento do array | Cadastro de canais, exibindo o **rótulo** |
+| Loja de origem | `sourceName` | **Texto congelado no disparo** | Valores distintos da própria coleção |
+| Data | `dispatchedAt` | Intervalo de dias do calendário | — |
+
+**Por que a loja filtra por texto e não por identificador:** o log não guarda `sourceId`. Guarda o nome como estava no instante do disparo, porque é isso que uma trilha imutável significa. Decorre daí que renomear uma fonte divide o filtro em duas entradas — os logs antigos permanecem sob o nome antigo. Acrescentar `sourceId` ao model não consertaria os logs já gravados.
+
+**Por que as opções de loja vêm dos logs e não do cadastro de fontes:** só assim toda opção oferecida corresponde a algum resultado. Uma fonte cadastrada que nunca originou disparo não tem o que filtrar.
+
+Os cadastros de operador e de canal servem como origem das opções porque a regra de exclusão criada na sessão anterior impede remover qualquer um dos dois enquanto houver log apontando para ele — a lista sempre cobre a base inteira.
+
+### 3. A coluna "Status" precisa ser honesta sobre o que ainda não existe
+
+`deliveryStatus` nasce vazio: o resultado por canal é do worker de disparo, que é da Categoria 6 e não existe. Toda linha hoje exibe **"Aguardando disparo"**, e o arquivo exportado diz o mesmo. Uma coluna que dissesse "Publicado" mentiria.
+
+E há duas informações distintas ocupando a mesma célula, sem inventar uma oitava coluna:
+
+- **`actionType`** — o que o **operador** fez: disparo automatizado ou cópia assistida. O `MONETIZACAO.md`, 3.3, registra que a cópia não confirma publicação alguma; a distinção é insumo do rateio.
+- **`deliveryStatus`** — o que a **máquina** entregou, quando houver worker para entregar.
+
+### 4. Backend
+
+| Arquivo | Conteúdo |
+| :--- | :--- |
+| `database/models/dispatchLogModel.ts` | Dois índices novos: `{sourceName, dispatchedAt}` e `{channels, dispatchedAt}` |
+| `modules/audit/auditMapper.ts` | Documento → DTO, normalizando o `Map` de `deliveryStatus` |
+| `modules/audit/auditQueryService.ts` | Filtro, paginação, totais e o recorte de exportação |
+| `modules/audit/auditCsv.ts` | Serialização do arquivo |
+| `modules/audit/auditRoutes.ts` | `GET /api/logs`, `/api/logs/filters` e `/api/logs/export` |
+
+**Os índices são compostos com `dispatchedAt: -1`** porque a listagem é sempre ordenada por ele: sem o segundo campo, o filtro usaria o índice e a ordenação cairia em varredura.
+
+**Só existe leitura no módulo.** `dispatch_logs` é gravado uma vez pela ação resolutiva e nunca reescrito — o model já declarava `timestamps: false` pelo mesmo motivo. Nenhum verbo de escrita foi exposto, e é assim de propósito: corrigir uma linha aqui seria corrigir o histórico.
+
+### 5. Um defeito real encontrado na verificação
+
+**Os totais vinham zerados sempre que o filtro de operador estava ativo.** A listagem acertava e a agregação devolvia `{0, 0}` para o mesmo recorte.
+
+Causa: o Mongoose converte o texto do identificador em `ObjectId` pelo schema nas consultas comuns, mas **entrega o pipeline de agregação cru ao MongoDB**, sem passar por essa conversão. Com `operatorId` em texto, o `$match` não casava com nada. Conferido diretamente no banco: `$match` com texto devolve zero documentos, com `ObjectId` devolve três.
+
+Corrigido convertendo o identificador no próprio `buildFilter`, com o motivo registrado em comentário para que a assimetria não seja "simplificada" de volta.
+
+**Nota de método:** este defeito quase passou. As duas primeiras execuções da bateria acusaram a falha, mas a segunda rodou contra um servidor que não havia sido reiniciado — o `dist` estava atualizado e o processo, não. Passou-se a conferir o horário de início do processo contra o `mtime` do build antes de aceitar qualquer resultado, e a bateria final foi executada inteira contra um servidor comprovadamente atual.
+
+### 6. Fuso do recorte de datas
+
+`from` e `to` chegam como `YYYY-MM-DD` e viram início e fim do dia **local da máquina administrativa**, nunca UTC. Interpretar em UTC jogaria um disparo das 22h de um dia brasileiro para o dia seguinte no filtro.
+
+A primeira versão do teste dessa borda não testava a borda: o `mongosh` roda no container, que está em UTC, enquanto o host e o processo Node estão em `America/Sao_Paulo`. O que parecia um disparo às 23h59 era, na verdade, 20h59 local. A conferência foi refeita com instantes declarados explicitamente em UTC, atravessando a fronteira do dia nas duas direções.
+
+### 7. Exportação CSV
+
+Existe para um uso declarado: o rateio de comissão é um cruzamento entre esta base e a planilha de vendas exportada da plataforma de afiliados (`MONETIZACAO.md`, 3.2). Sem ela, o cruzamento exigiria consulta direta ao MongoDB. Três decisões seguem do destino ser uma planilha em português:
+
+- **Separador `;` e marca de ordem de bytes** — o Excel em português despeja um CSV separado por vírgula numa única coluna, e sem a BOM lê o arquivo como Latin-1, corrompendo todo acento.
+- **Vírgula decimal e data `dd/MM/aaaa`** — para que a planilha leia número como número e data como data.
+- **Neutralização de injeção de fórmula** — o título do produto e o nome da loja vêm de dados coletados de terceiros. Um valor começando com `=`, `+`, `-` ou `@` seria executado como fórmula ao abrir o arquivo; o apóstrofo à frente força a célula a ser texto. Conferido com um título `=HYPERLINK("http://malicioso.test")`.
+
+A exportação ignora a paginação e preserva todos os demais filtros. É servida com `Content-Disposition: attachment`, e a tela a abre por **âncora de navegação**, não por `fetch`: é a navegação do navegador que dispara o download com o nome de arquivo definido no servidor.
+
+### 8. Tela
+
+`AuditScreen` não usa `ResourceScreen` nem `useAdminResource`: aqueles existem para cadastros com escrita, e a auditoria é somente leitura com filtros e paginação no servidor. Forçar uma no formato da outra pioraria as duas. Reaproveitam-se `DataTable`, `Card`, `SelectField`, `TextField`, `Badge` e o cliente HTTP do `@aap/ui`.
+
+**Os filtros são aplicados por comando, não a cada tecla.** A base cresce indefinidamente e a consulta é paginada no servidor; disparar a cada digitação encheria a rede de consultas descartadas. O que está no formulário é rascunho, e só vira recorte ao clicar em "Aplicar filtros". Trocar o recorte volta à primeira página — a página 3 do recorte anterior não tem relação com o novo.
+
+**As opções de loja são carregadas uma vez, na abertura da tela, e não acompanham os filtros.** Uma lista que encolhesse conforme o recorte impediria o administrador de trocar de loja sem antes limpar o que já escolheu.
+
+Os totais exibem contagem e soma dos preços do recorte **inteiro**, não da página. A tela declara explicitamente que **a soma é de preço de produto, não de comissão** — o cálculo de comissão depende do cruzamento com os relatórios das plataformas e é projeto futuro.
+
+A Visão geral deixou de anunciar a auditoria como pendente e passou a dizer o que de fato ainda não está no ar: ingestão, IA, fila e drivers — e que por isso o Status da auditoria permanece em "Aguardando disparo".
+
+### 9. Um ajuste vindo da conferência visual
+
+A barra de paginação aparecia com "Anterior" e "Próxima" permanentemente desabilitados quando o recorte cabia inteiro numa página. A contagem de linhas passou a ser exibida sempre, e os dois controles, apenas quando há mais de uma página.
+
+### 10. Eliminação de duplicação (desvio de plano registrado)
+
+A tabela precisa de preço e data e hora formatados, que já existiam em `apps/dashboard-remote/src/formatters.ts`. Copiá-los reintroduziria a duplicação byte a byte que motivou a promoção do cliente HTTP na sessão anterior. `formatCurrency`, `formatDateTime` e `formatDiscount` foram para `packages/ui/src/formatters.ts`, com os imports do dashboard remoto repontados — mesmo critério, mesmo tipo de código.
+
+### 11. Validações executadas
+
+`typecheck`, `lint` e `build` limpos nos cinco workspaces. **81 verificações, zero falhas**, executadas na ordem de dependência contra um servidor comprovadamente rodando o build final.
+
+**Backend, 35 verificações:**
+
+| Cenário | Resultado |
+| :--- | :--- |
+| Listagem ordenada, com produto e loja sem join | Conferido |
+| Totais: contagem e soma sobre o recorte inteiro | Conferido |
+| Filtro por operador, loja, canal e data, isolados | Conferido |
+| Canal casando contra elemento do array, incluindo log multicanal | Conferido |
+| Filtros combinados, com e sem interseção | Conferido |
+| Data malformada e limite acima do teto | 400 |
+| Paginação, página além do fim e total independente da página | Conferido |
+| Opções de loja lidas dos próprios logs | Conferido |
+| CSV: cabeçalho de download, BOM, separador, vírgula decimal, filtros respeitados | Conferido |
+| CSV: injeção de fórmula neutralizada | Conferido |
+
+**Borda de fuso, 5 verificações:** um disparo às 23h59 do dia 5 em São Paulo — que é dia 6 em UTC — aparece no recorte do dia 5 e **não** no do dia 6; o mesmo na véspera e no início do dia; intervalo fechado incluindo as duas pontas.
+
+**Interface, 28 verificações** (Chromium headless dirigido por CDP com WebSocket puro, preservando a decisão em aberto entre Playwright e Puppeteer): as sete colunas na ordem pedida; ordenação decrescente; Status honesto em toda linha; canal exibido pelo rótulo e **nunca** pela chave crua; filtros alimentados pelas fontes corretas; escolher filtro não altera a listagem antes de aplicar; "Limpar" esvaziando formulário e recorte; link de exportação carregando os filtros ativos; estado vazio comunicado como vazio e não como erro; **zero elementos com transição ou animação acima de zero**; todo campo com rótulo associado; link externo com `noopener`/`noreferrer`; nenhuma exceção de JavaScript.
+
+**Paginação com volume real, 13 verificações** (125 logs): 50 linhas por página, faixa exibida correta nas três páginas, continuidade entre páginas, botões desabilitados nas pontas, retorno à primeira página ao trocar o recorte, e a soma cobrindo o recorte inteiro e não a página.
+
+Os dados de verificação foram removidos do banco (as cinco coleções voltaram a zero documentos) e os scripts, descartados. Nenhum commit, branch ou push foi realizado.
+
+### 12. Pendências deixadas explicitamente em aberto
+
+- **`deliveryStatus` chega vazio em toda linha.** O worker de disparo é da Categoria 6. A tela e o arquivo dizem "Aguardando disparo" em vez de sugerir entrega.
+- **O cálculo de comissão não entrou**, e é declaradamente projeto futuro. `totalValue` é soma de preço de produto; a tela diz isso em texto, para que não haja ambiguidade.
+- **Sub-ID por operador nos links** segue como decisão em aberto na Categoria 8. É o que transformaria a atribuição de comissão de inferida em medida.
+- **Divergência documental:** a Seção 9 do `ESPECS_TECNICAS.md` lista `GET /api/logs`, mas não `/api/logs/filters` nem `/api/logs/export`; a Seção 8 do `ARQUITETURA.md` não enumera o módulo `audit/`. A atualização dos dois pertence ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`), somando-se às divergências já registradas na sessão anterior.

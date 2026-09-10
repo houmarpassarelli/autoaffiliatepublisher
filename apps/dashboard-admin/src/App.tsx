@@ -13,18 +13,20 @@ import {
   useBackendHealth,
   type TabItem,
 } from '@aap/ui';
+import { AuditScreen } from './screens/AuditScreen.js';
 import { ChannelsScreen } from './screens/ChannelsScreen.js';
 import { OperatorsScreen } from './screens/OperatorsScreen.js';
 import { SourcesScreen } from './screens/SourcesScreen.js';
 
 /** Seções do painel administrativo. */
-type AdminSectionId = 'overview' | 'sources' | 'channels' | 'operators';
+type AdminSectionId = 'overview' | 'sources' | 'channels' | 'operators' | 'audit';
 
 const ADMIN_SECTIONS: TabItem<AdminSectionId>[] = [
   { id: 'overview', label: 'Visão geral' },
   { id: 'sources', label: 'Fontes de Coleta' },
   { id: 'channels', label: 'Canais de Destino' },
   { id: 'operators', label: 'Operadores' },
+  { id: 'audit', label: 'Auditoria de Disparos' },
 ];
 
 /**
@@ -77,10 +79,11 @@ function BackendHealthCard(): React.JSX.Element {
 }
 
 /**
- * Visão geral: saúde da máquina e o que ainda falta construir no painel.
+ * Visão geral: saúde da máquina e o mapa honesto do que ainda não existe.
  *
- * Os módulos já entregues deixaram de ser listados aqui — eles têm aba própria.
- * O que resta é o mapa honesto do que continua pendente.
+ * Os módulos entregues não são listados aqui — cada um tem aba própria. O que
+ * resta é o aviso de que nenhuma publicação real acontece ainda, porque é a
+ * informação que muda como o painel deve ser lido.
  */
 function OverviewSection(): React.JSX.Element {
   return (
@@ -90,11 +93,12 @@ function OverviewSection(): React.JSX.Element {
       </div>
 
       <div className="col-12 col-lg-7">
-        <Card title="Auditoria de Disparos" actions={<Badge tone="warning">Pendente</Badge>}>
+        <Card title="O que ainda não está no ar" actions={<Badge tone="warning">Pendente</Badge>}>
           <p className="text-secondary mb-0">
-            Tabela de logs de disparo com filtros por data, operador, loja de origem e canal de
-            destino. Os registros já estão sendo gravados a cada publicação — falta a tela de
-            consulta.
+            A ingestão, o refinamento por IA, a fila de disparo e os drivers de canal ainda não
+            existem. Uma oferta concluída significa <strong>ação resolutiva registrada</strong>, e
+            não mensagem entregue no canal — por isso o Status da auditoria permanece em
+            &quot;Aguardando disparo&quot;.
           </p>
         </Card>
       </div>
@@ -129,6 +133,7 @@ export function App(): React.JSX.Element {
           {section === 'sources' ? <SourcesScreen /> : null}
           {section === 'channels' ? <ChannelsScreen /> : null}
           {section === 'operators' ? <OperatorsScreen /> : null}
+          {section === 'audit' ? <AuditScreen /> : null}
         </div>
       </Tabs>
     </AppShell>

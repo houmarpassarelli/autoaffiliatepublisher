@@ -1,10 +1,12 @@
-// apps/dashboard-remote/src/formatters.ts
+// packages/ui/src/formatters.ts
 
 /**
- * Formatadores da interface do operador.
+ * Formatadores de apresentação, compartilhados pelas duas interfaces.
  *
  * Centralizados para que preço e horário tenham a mesma aparência em todo o
- * painel: o operador decide em 5 a 10 segundos e compara valores entre cards.
+ * produto: o operador decide em 5 a 10 segundos comparando valores entre cards,
+ * e o administrador confere na auditoria o preço exato que foi ao ar. Os dois
+ * precisam ler o mesmo número escrito do mesmo jeito.
  */
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {

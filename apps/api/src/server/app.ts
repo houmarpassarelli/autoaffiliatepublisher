@@ -8,6 +8,7 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { env, isProduction } from '../config/env.js';
+import { auditRoutes } from '../modules/audit/index.js';
 import { channelAdminRoutes, channelRoutes } from '../modules/channels/index.js';
 import { offerRoutes } from '../modules/offers/index.js';
 import { operatorRoutes } from '../modules/operators/index.js';
@@ -72,6 +73,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   // arquitetural, só a máquina local os alcança (ARQUITETURA.md, Seção 4.3).
   await app.register(sourceRoutes);
   await app.register(channelAdminRoutes);
+  await app.register(auditRoutes);
 
   // Camada de tempo real: rota /ws, broadcast de estado global e presença ativa.
   await registerWebsocketModule(app);

@@ -1,9 +1,17 @@
 // apps/dashboard-remote/src/components/OfferCard.tsx
 import { useState } from 'react';
 import { DispatchActionType, OfferStatus, type ChannelDto, type OfferDto } from '@aap/shared';
-import { Alert, ApiError, Badge, Button, describeError } from '@aap/ui';
+import {
+  Alert,
+  ApiError,
+  Badge,
+  Button,
+  describeError,
+  formatCurrency,
+  formatDateTime,
+  formatDiscount,
+} from '@aap/ui';
 import { discardOffer, dispatchOffer } from '../api/offersApi.js';
-import { formatCurrency, formatDateTime, formatDiscount } from '../formatters.js';
 import type { OfferTransition } from '../state/useOfferBoard.js';
 import { ChannelSelector } from './ChannelSelector.js';
 

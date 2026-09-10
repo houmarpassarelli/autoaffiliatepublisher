@@ -153,3 +153,40 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 **Por que o cliente HTTP vai para o `@aap/ui` e não para o `@aap/shared`:** é código de navegador. O `@aap/shared` compila sem `lib: DOM` e é consumido pelo backend — levar `fetch` para lá vazaria globais de navegador no pacote de contrato. O `@aap/ui` já faz HTTP no `useBackendHealth`.
 
 **Delimitação de escopo:** a criptografia das credenciais em repouso permanece decisão em aberto (Categoria 8) — os valores são gravados como recebidos, como os models já documentam. Ficam de fora também `POST /api/sources/:id/run`, o Painel de Auditoria de Disparos e qualquer motor de ingestão.
+
+---
+
+## 2026-09-09 — 23:45 — Painel de Auditoria de Disparos
+
+**Contexto:** o solicitante pediu o último item pendente do Dashboard Administrativo — a tabela de auditoria com filtros por data, operador, loja de origem e canal, e as colunas Data/Hora, Operador, Produto, Loja, Preço, Link e Status (`CHECKLIST.md`, Categoria 4). Os `dispatch_logs` já vêm sendo gravados a cada ação resolutiva desde 09/09/2026; o que faltava era a tela de consulta.
+
+**Análise do item (base do desenho aprovado):**
+
+1. **Este item é de leitura, não de gravação.** O `DispatchLogModel` já desnormaliza `offerTitle` e `sourceName`, com o comentário registrando o motivo — "evita join na listagem da auditoria". As sete colunas pedidas saem de um único documento, sem `populate` e sem consulta por linha. Uma decisão tomada duas sessões atrás paga aqui.
+
+2. **Os quatro filtros não são o mesmo tipo de filtro.** Operador filtra por `operatorId` (identidade) e canal por chave estável — os dois têm cadastro vivo para alimentar a lista de opções, garantido pela regra de exclusão criada na sessão anterior. Data é intervalo sobre `dispatchedAt`. **Loja de origem é texto congelado:** o log guarda `sourceName`, não `sourceId`, porque a auditoria é imutável e o nome gravado é a verdade daquele instante. Consequência aceita e documentada: a lista de lojas do filtro vem dos valores distintos da própria coleção, e renomear uma fonte divide o filtro em duas entradas. Acrescentar `sourceId` ao model não consertaria os logs já gravados.
+
+3. **A coluna "Status" precisa ser honesta sobre o que ainda não existe.** `deliveryStatus` nasce vazio, porque o worker de disparo é da Categoria 6 e não existe — uma coluna que dissesse "Publicado" mentiria. E há duas informações distintas que não podem ser fundidas: `actionType` é o que o **operador** fez (disparo automatizado ou cópia assistida, distinção que o `MONETIZACAO.md`, 3.3, registra como insumo do rateio), e `deliveryStatus` é o que a **máquina** entregou. As duas ocupam a mesma célula, sem inventar uma oitava coluna.
+
+4. **Paginação não é opcional.** `dispatch_logs` é a única coleção do sistema que cresce para sempre e nunca é podada. As outras telas do painel carregam tudo porque fontes, canais e operadores são dezenas.
+
+5. **O que não se reaproveita:** `useAdminResource` e `ResourceScreen` existem para cadastros com escrita. A auditoria é somente leitura, com filtros e paginação no servidor; forçá-la naquela moldura pioraria as duas. Reaproveitam-se `DataTable`, `Card`, `SelectField`, `TextField`, `Badge` e o cliente HTTP do `@aap/ui`.
+
+**Escopo aprovado:**
+
+1. **Contrato compartilhado** — schemas de consulta, de resposta paginada e das opções de filtro.
+2. **Backend** — dois índices novos em `dispatch_logs` (`sourceName` e `channels`, ambos compostos com `dispatchedAt`) e o módulo `audit/` com `GET /api/logs`, `GET /api/logs/filters` e a exportação.
+3. **Dashboard Administrativo** — quinta aba, barra de filtros, tabela com as sete colunas, totais e paginação.
+
+**Decisões do solicitante nesta sessão:**
+
+| Decisão | Escolha | Efeito |
+| :--- | :--- | :--- |
+| Exportação CSV | Incluir agora | O `MONETIZACAO.md`, 3.2, descreve o rateio como cruzamento entre os `dispatch_logs` e a planilha de vendas exportada da plataforma; sem exportação, esse cruzamento exigiria consulta direta ao MongoDB. A exportação respeita os filtros ativos |
+| Totais do recorte | Contagem e soma dos preços | Responde "quanto o operador X movimentou no período" sem exportar nada. A contagem já é calculada pela paginação; a soma sai da mesma agregação. Registrado na tela que a soma é **preço de produto, não comissão** |
+
+**Recorte do intervalo de datas:** `from` e `to` chegam como `YYYY-MM-DD` e são convertidos em início e fim do **dia local da máquina administrativa**, não em UTC. Interpretar em UTC jogaria um disparo das 22h de um dia brasileiro para o dia seguinte no filtro.
+
+**Delimitação de escopo:** o cálculo de comissão permanece projeto futuro declarado no `MONETIZACAO.md`; o sub-ID por operador nos links segue como decisão em aberto na Categoria 8; e nada muda no que é gravado no momento do disparo.
+
+**Atualização do plano durante a execução (Seção 3.4):** a tabela de auditoria precisa de preço e data e hora formatados, que já existiam em `apps/dashboard-remote/src/formatters.ts`. Copiá-los para o painel administrativo reintroduziria a duplicação byte a byte que motivou a promoção do cliente HTTP na sessão anterior. `formatCurrency`, `formatDateTime` e `formatDiscount` foram promovidos para `packages/ui/src/formatters.ts`, com os imports do dashboard remoto repontados — o mesmo critério, aplicado ao mesmo tipo de código: apresentação compartilhada pelas duas interfaces.
