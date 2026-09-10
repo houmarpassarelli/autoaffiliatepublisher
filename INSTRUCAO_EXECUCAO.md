@@ -41,3 +41,7 @@ Nenhuma alteração de arquivo ou código deve ser feita sem aprovação prévia
 Após a implementação e validação do código, as seguintes etapas são obrigatórias:
 - **Atualizar `DEVLOG.md`:** Registre detalhadamente o que foi atualizado ou criado na sessão.
 - **Atualizar `CHECKLIST.md`:** Marque a task referenciada como concluída e mova-a para a seção *"Implementados no Código"*, respeitando sua devida categoria/segmento.
+
+## 8. Regras
+Essas regras devem ser seguidas de forma majoritária, inegociável e questionável:
+- **Não executar certos comandos git sem autorização:** Os comandos **git add** e **git commit** NÃO devem ser executados sem permissão. Comandos para leitura de commits pode ser executado. Os comandos **git log** e **git status**, podem ser executados.
