@@ -8,6 +8,7 @@ import {
   offerListQuerySchema,
   offerListResponseSchema,
   offerResolutionResponseSchema,
+  offerDtoSchema,
 } from '@aap/shared';
 import { listOffersByStatus } from './offerQueryService.js';
 import { discardOffer, dispatchOffer } from './offerResolutionService.js';
@@ -73,5 +74,24 @@ export const offerRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request) => discardOffer(request.params.id, request.body),
+  );
+
+  /** Comando de regeneração de copy da IA (mock até a Demanda 1.4). */
+  app.post(
+    '/api/offers/:id/regenerate',
+    {
+      schema: {
+        params: offerIdParamsSchema,
+        response: {
+          200: offerDtoSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request) => {
+      const { regenerateOfferCopy } = await import('./offerResolutionService.js');
+      return regenerateOfferCopy(request.params.id);
+    },
   );
 };

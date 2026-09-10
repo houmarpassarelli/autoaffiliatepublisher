@@ -231,3 +231,49 @@ export async function discardOffer(
 
   return announceResolution(claimed, operator.name);
 }
+
+/**
+ * Regenera a copy da oferta usando o módulo de IA (Demanda 1.4 pendente).
+ *
+ * Como a integração com LLM ainda não existe, esta função apenas anexa
+ * um texto de marcação nas variantes de copy existentes.
+ */
+export async function regenerateOfferCopy(offerId: string) {
+  const offer = await OfferModel.findById(offerId);
+
+  if (!offer) {
+    throw new NotFoundError('Oferta não encontrada.');
+  }
+
+  if (offer.status !== OfferStatus.OPEN) {
+    throw new BadRequestError('Apenas ofertas abertas podem ter a copy regenerada.');
+  }
+
+  // MOCK: O LLM ainda não está integrado (Demanda 1.4). Simulando a regeneração.
+  const aiCopyMap = offer.aiCopy as unknown as Map<string, string>;
+  
+  if (aiCopyMap instanceof Map) {
+    const formats = ['messaging', 'social', 'article'];
+    for (const format of formats) {
+      if (aiCopyMap.has(format)) {
+        aiCopyMap.set(format, (aiCopyMap.get(format) ?? '') + '\n\n[Regenerada pela IA]');
+      }
+    }
+  } else if (typeof offer.aiCopy === 'object') {
+    const aiCopyObj = offer.aiCopy as Record<string, string>;
+    const formats = ['messaging', 'social', 'article'];
+    for (const format of formats) {
+      if (aiCopyObj[format]) {
+        aiCopyObj[format] += '\n\n[Regenerada pela IA]';
+      }
+    }
+  }
+
+  await offer.save();
+
+  const source = await SourceModel.findById(offer.sourceId).select({ name: 1 }).lean();
+  const sourceName = source?.name ?? 'Fonte removida';
+
+  const { toOfferDto } = await import('./offerMapper.js');
+  return toOfferDto(offer, sourceName);
+}

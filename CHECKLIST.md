@@ -145,14 +145,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#21-estados))*
 - [x] **Sincronização Reativa Completa via WebSocket** (*cards migram entre abas em todas as telas conectadas, sem F5 — conferido com dois navegadores independentes, incluindo clique simultâneo no mesmo card; a volta de uma queda de conexão ressincroniza a fila*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#4-estado-global-único-e-controle-de-concorrência))*
+- [x] **Botão "Copiar para Área de Transferência"** (*copia a mensagem formatada e sinaliza conclusão — equivalência total com "Publicar". A rota já aceita `COPIED_CLIPBOARD` e o caminho está verificado ponta a ponta: resta apenas a interface*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#5-equivalência-de-ação--copiar-vale-como-publicar))*
+- [x] **Botão "Regenerar Copy"** (*reenvia o payload ao LLM quando o texto gerado não ficou atrativo*)
+  *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 4)*
 
 ### Pendentes
 - [ ] **Contagem Regressiva na Aba Agendadas** (*o horário previsto de envio, os canais selecionados e a assinatura do operador já são exibidos; falta o countdown por item*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#32-aba-agendadas-na-fila-de-disparo))*
-- [ ] **Botão "Copiar para Área de Transferência"** (*copia a mensagem formatada e sinaliza conclusão — equivalência total com "Publicar". A rota já aceita `COPIED_CLIPBOARD` e o caminho está verificado ponta a ponta: resta apenas a interface*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#5-equivalência-de-ação--copiar-vale-como-publicar))*
-- [ ] **Botão "Regenerar Copy"** (*reenvia o payload ao LLM quando o texto gerado não ficou atrativo*)
-  *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 4)*
 
 ---
 

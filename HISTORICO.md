@@ -190,3 +190,15 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 **Delimitação de escopo:** o cálculo de comissão permanece projeto futuro declarado no `MONETIZACAO.md`; o sub-ID por operador nos links segue como decisão em aberto na Categoria 8; e nada muda no que é gravado no momento do disparo.
 
 **Atualização do plano durante a execução (Seção 3.4):** a tabela de auditoria precisa de preço e data e hora formatados, que já existiam em `apps/dashboard-remote/src/formatters.ts`. Copiá-los para o painel administrativo reintroduziria a duplicação byte a byte que motivou a promoção do cliente HTTP na sessão anterior. `formatCurrency`, `formatDateTime` e `formatDiscount` foram promovidos para `packages/ui/src/formatters.ts`, com os imports do dashboard remoto repontados — o mesmo critério, aplicado ao mesmo tipo de código: apresentação compartilhada pelas duas interfaces.
+
+## 2026-09-10 — 01:25 — Ações de Interface: Botões "Copiar" e "Regenerar Copy"
+
+**Contexto:** O solicitante comandou explicitamente "EXECUTE O DESENVOLVIMENTO" para duas funcionalidades no card do Dashboard Remoto: "Copiar para Área de Transferência" e "Regenerar Copy". A primeira reaproveita o núcleo resolutivo já implementado (com `COPIED_CLIPBOARD`), bastando apenas a interface. A segunda necessita de um mock no servidor, pois o LLM é da Demanda 1.4 (pendente).
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Botão "Copiar para Área de Transferência":** Lê a copy (`messaging`), escreve no `navigator.clipboard` e chama `dispatchOffer` no servidor, com `DispatchActionType.COPIED_CLIPBOARD`.
+2. **Botão "Regenerar Copy":** Localizado acima ou ao lado da copy exibida, com estado de loading enquanto aguarda o servidor.
+3. **Backend (`apps/api`):** Criação da rota temporária `POST /api/offers/:id/regenerate`, simulando a chamada de LLM ao anexar texto de regeneração nas copys existentes, até que a Demanda 1.4 seja construída.
+
+**Decisões:** O `regenerate` não emitirá evento no WebSocket por enquanto, já que não há `OFFER_UPDATED` especificado no contrato atual; a própria requisição HTTP devolve o novo `OfferDto` ao autor do comando para renderização imediata.

@@ -2,6 +2,7 @@
 import {
   offerListResponseSchema,
   offerResolutionResponseSchema,
+  offerDtoSchema,
   type DiscardCommand,
   type DispatchCommand,
   type OfferDto,
@@ -42,5 +43,12 @@ export async function discardOffer(
   return apiRequest(`/api/offers/${offerId}/discard`, offerResolutionResponseSchema, {
     method: 'POST',
     body: JSON.stringify(command),
+  });
+}
+
+/** Comando para regenerar a copy da oferta via IA (Demanda 1.4). */
+export async function regenerateCopy(offerId: string): Promise<OfferDto> {
+  return apiRequest(`/api/offers/${offerId}/regenerate`, offerDtoSchema, {
+    method: 'POST',
   });
 }

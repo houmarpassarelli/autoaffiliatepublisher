@@ -592,3 +592,22 @@ Os dados de verificação foram removidos do banco (as cinco coleções voltaram
 - **O cálculo de comissão não entrou**, e é declaradamente projeto futuro. `totalValue` é soma de preço de produto; a tela diz isso em texto, para que não haja ambiguidade.
 - **Sub-ID por operador nos links** segue como decisão em aberto na Categoria 8. É o que transformaria a atribuição de comissão de inferida em medida.
 - **Divergência documental:** a Seção 9 do `ESPECS_TECNICAS.md` lista `GET /api/logs`, mas não `/api/logs/filters` nem `/api/logs/export`; a Seção 8 do `ARQUITETURA.md` não enumera o módulo `audit/`. A atualização dos dois pertence ao Fluxo 2 (`INSTRUCAO_DOSSIE.md`), somando-se às divergências já registradas na sessão anterior.
+
+---
+
+## 2026-09-10 — Ações de Interface: Botões "Copiar" e "Regenerar Copy"
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 10/09/2026.
+
+### 1. Botões inseridos no Dashboard Remoto
+
+Foram implementados dois novos botões de interação direta no card de ofertas do `apps/dashboard-remote`:
+
+- **Copiar para Área de Transferência:** Registrado ao lado de "Publicar", ele primeiramente escreve o conteúdo da mensagem formatada no clipboard do navegador e só após o sucesso envia o comando de disparo, validando com a ação local.
+- **Regenerar Copy:** Implementado logo acima do texto da IA, este botão permite a regeneração de texto sem transição na fila. Ele exibe loading até que o servidor retorne o estado completo da oferta com a nova copy (ou com o sufixo indicativo de regeneração).
+
+### 2. Tratamento no Backend (Rota e Mocking)
+
+- Rota adicionada em `offerRoutes.ts`: `POST /api/offers/:id/regenerate`.
+- O método em `offerResolutionService.ts` garante que apenas ofertas em estado `OPEN` possam sofrer regeneração e salva a mutação no banco, sem envio de broadcast de atualização de texto na fila global.
+- Uma vez que o módulo de LLM (Demanda 1.4) está pendente, a implementação altera todas as chaves (messaging, social, article) e concatena uma marca `[Regenerada pela IA]` na copy original da oferta no MongoDB. Trata adequadamente quando `offer.aiCopy` é instanciado em modo Map do Mongoose.

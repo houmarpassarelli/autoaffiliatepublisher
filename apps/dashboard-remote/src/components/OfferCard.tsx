@@ -11,7 +11,7 @@ import {
   formatDateTime,
   formatDiscount,
 } from '@aap/ui';
-import { discardOffer, dispatchOffer } from '../api/offersApi.js';
+import { discardOffer, dispatchOffer, regenerateCopy } from '../api/offersApi.js';
 import type { OfferTransition } from '../state/useOfferBoard.js';
 import { ChannelSelector } from './ChannelSelector.js';
 
@@ -28,7 +28,7 @@ export interface OfferCardProps {
 }
 
 /** Ação em andamento, para desabilitar os dois botões e trocar o rótulo do certo. */
-type PendingAction = 'dispatch' | 'discard' | null;
+type PendingAction = 'dispatch' | 'discard' | 'copy' | 'regenerate' | null;
 
 /** Preço, desconto e o menor valor já visto — o insumo da decisão editorial. */
 function PriceBlock({ offer }: { offer: OfferDto }): React.JSX.Element {
@@ -58,12 +58,14 @@ function PriceBlock({ offer }: { offer: OfferDto }): React.JSX.Element {
  * respondeu. É a fronteira do Thin Client dentro da interface.
  */
 export function OfferCard({
-  offer,
+  offer: initialOffer,
   channels,
   operator,
   onResolved,
   onVanish,
 }: OfferCardProps): React.JSX.Element {
+  const [offer, setOffer] = useState(initialOffer);
+
   /**
    * O estado guarda o que o operador **desmarcou**, e não o que está marcado.
    *
@@ -105,13 +107,16 @@ export function OfferCard({
    */
   async function runResolution(
     action: Exclude<PendingAction, null>,
-    execute: () => Promise<OfferTransition>,
+    execute: () => Promise<OfferTransition | void>,
   ): Promise<void> {
     setPending(action);
     setError(null);
 
     try {
-      onResolved(await execute());
+      const result = await execute();
+      if (result) {
+        onResolved(result);
+      }
     } catch (resolutionError) {
       if (resolutionError instanceof ApiError && resolutionError.isConflict) {
         onVanish(offer.id);
@@ -141,6 +146,40 @@ export function OfferCard({
         scheduledFor: result.scheduledFor,
         selectedChannels: result.selectedChannels,
       };
+    });
+  }
+
+  /** Clique em "Copiar": copia para área de transferência e resolve a oferta. */
+  function handleCopyAndDispatch(): void {
+    void runResolution('copy', async () => {
+      try {
+        await navigator.clipboard.writeText(offer.aiCopy.messaging);
+      } catch (err) {
+        throw new Error('Não foi possível copiar para a área de transferência.', { cause: err });
+      }
+
+      const result = await dispatchOffer(offer.id, {
+        operatorId: operator.id,
+        actionType: DispatchActionType.COPIED_CLIPBOARD,
+        channels: selectedChannels,
+      });
+
+      return {
+        offerId: result.offerId,
+        status: result.status,
+        operatorName: result.operatorName,
+        scheduledFor: result.scheduledFor,
+        selectedChannels: result.selectedChannels,
+      };
+    });
+  }
+
+  /** Clique em "Regenerar Copy": solicita nova variação ao LLM. */
+  function handleRegenerate(): void {
+    void runResolution('regenerate', async () => {
+      // Regenerate does not transition the state of the board, it updates the card internally
+      const updatedOffer = await regenerateCopy(offer.id);
+      setOffer(updatedOffer);
     });
   }
 
@@ -197,7 +236,20 @@ export function OfferCard({
 
         {offer.aiCopy.messaging ? (
           <div className="mt-3">
-            <span className="form-label">Copy gerada pela IA</span>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="form-label mb-0">Copy gerada pela IA</span>
+              {isOpen ? (
+                <Button
+                  variant="secondary"
+                  onClick={handleRegenerate}
+                  loading={pending === 'regenerate'}
+                  loadingLabel="Regenerando…"
+                  disabled={pending !== null}
+                >
+                  Regenerar Copy
+                </Button>
+              ) : null}
+            </div>
             {/* Uma variante por card: as outras são consumidas por canal, no
                 driver de cada destino, e não pelo operador. */}
             <div className="border rounded p-2 bg-light whitespace-pre-wrap">
@@ -244,6 +296,16 @@ export function OfferCard({
             disabled={pending !== null || selectedChannels.length === 0}
           >
             Publicar
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={handleCopyAndDispatch}
+            loading={pending === 'copy'}
+            loadingLabel="Copiando…"
+            disabled={pending !== null || selectedChannels.length === 0 || !offer.aiCopy.messaging}
+          >
+            Copiar para Área de Transferência
           </Button>
 
           <Button
