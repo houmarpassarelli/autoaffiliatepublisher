@@ -80,7 +80,7 @@ A IA recebe um payload **já estruturado** (título, preços, desconto, especifi
 | **Instagram (Feed/Carrossel)** | Meta Graph API (conta empresarial vinculada ao Facebook) | **Alta / oficial** | Permite postar foto/carrossel com legenda. **Não permite link clicável em legenda** — apenas link na bio, sticker em Stories ou direct automático. |
 | **Instagram (Stories)** | — | **Assistida** | Automação de criativo efêmero exige aprovações complexas de desenvolvedor. Fluxo híbrido: copiar imagem + legenda. |
 | **TikTok** | — | **Assistida** | Mesma restrição de criativo efêmero. |
-| **WhatsApp (Canais)** | — | **Média / não-oficial** | A Meta ainda restringe a Cloud API oficial para postagem em Canais. |
+| **WhatsApp (Canais)** | Biblioteca Não-Oficial | **Automação** | Automação total assumida. Risco de banimento aceito (ver 4.1). |
 
 ### 4.1. WhatsApp — Nota de Risco Explícita
 
@@ -91,7 +91,7 @@ Não existe API oficial da Meta para postagem em **Canais** de WhatsApp. As alte
 - Quebra sem aviso a cada mudança do protocolo pela Meta.
 - Violação dos termos de uso da plataforma.
 
-**Mitigação adotada pelo projeto:** o WhatsApp opera em **modo assistido** — o botão "Copiar para Área de Transferência" prepara a mensagem completa e o operador cola manualmente no Canal. Isso elimina o risco de banimento por comportamento automatizado. A adoção de qualquer biblioteca não-oficial permanece como **decisão em aberto**, e é opcional ao funcionamento do sistema.
+**Decisão adotada pelo projeto:** o WhatsApp operará com **automação total via biblioteca não-oficial** (como Baileys ou whatsapp-web.js). O risco de banimento por comportamento automatizado foi **aceito**. O uso do modo puramente assistido (copiar e colar) ficará como um fallback. A implementação do driver para o disparo lidará com a persistência de sessão e QR Code.
 
 ---
 

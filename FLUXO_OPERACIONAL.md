@@ -105,7 +105,7 @@ Nenhuma ação exige recarregar a página. Cenário de referência:
 
 ## 5. Equivalência de Ação — "Copiar" Vale como "Publicar"
 
-Para canais sem API direta de postagem (WhatsApp Canais, Instagram Stories, TikTok), o botão **"Copiar para Área de Transferência"** é tratado pelo sistema com a **mesma gravidade e o mesmo peso de um disparo automatizado**.
+Para canais sem API direta de postagem e que não possuam driver automatizado (Instagram Stories, TikTok), o botão **"Copiar para Área de Transferência"** é tratado pelo sistema com a **mesma gravidade e o mesmo peso de um disparo automatizado**.
 
 **Fluxo:**
 1. O operador clica em "Copiar".
@@ -193,7 +193,7 @@ Itens já capturados e itens descartados alimentam um histórico que impede a re
 | **Instagram (Feed)** | Automação oficial | Graph API com conta empresarial. **Não permite link clicável em legenda.** |
 | **Instagram (Stories)** | Assistido | Automação de criativo efêmero inviável sem aprovação complexa. |
 | **TikTok** | Assistido | Mesma restrição de criativo efêmero. |
-| **WhatsApp (Canais)** | Assistido | **Sem API oficial de postagem em Canais.** Automação por biblioteca não-oficial implica risco real de banimento. |
+| **WhatsApp (Canais)** | Automação total (não-oficial) | **Sem API oficial de postagem em Canais.** Automação implementada via biblioteca com risco de banimento aceito. |
 | **Amazon (programa)** | Regra do programa | Proíbe envio de links de afiliado em mensagens privadas fechadas sem identificação clara. Canais abertos são permitidos desde que cadastrados no perfil de associado. |
 
 ---

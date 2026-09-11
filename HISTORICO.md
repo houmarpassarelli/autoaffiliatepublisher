@@ -269,3 +269,13 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 
 1. **Auditoria de Código:** Foi confirmado que a funcionalidade já se encontrava plenamente implementada nos módulos `dispatchWorker.ts`, `broadcastEvents.ts` e `useOfferBoard.ts`, em virtude da execução da Fila BullMQ (Demanda 2.1) no dia 10/09/2026.
 2. **Organização:** Movido o respectivo item no `CHECKLIST.md` de "Pendentes" para "Implementados no Código", corrigindo o desvio documental constatado.
+
+## 2026-09-11 — 14:40 — Definição da Estratégia de WhatsApp
+
+**Contexto:** O solicitante comandou explicitamente "EXECUTE O DESENVOLVIMENTO: Definir a estratégia de WhatsApp (*modo exclusivamente assistido, ou adoção de biblioteca não-oficial com o risco de banimento aceito*)".
+
+**Decisões do solicitante nesta sessão:**
+Foi decidido adotar uma biblioteca não-oficial (automação total com risco de banimento aceito) para a postagem em Canais do WhatsApp.
+
+**Escopo aprovado e executado:**
+Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL.md`) para formalizar a escolha pela automação total via biblioteca não-oficial, com o risco de banimento plenamente aceito, rebaixando o modo assistido para fallback. O item foi movido para a lista de tarefas concluídas.

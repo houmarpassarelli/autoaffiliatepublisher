@@ -718,3 +718,9 @@ Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs d
 - **Contexto:** Solicitação para executar o desenvolvimento do evento `OFFER_PUBLISHED` e mover o card para a aba Concluídas no Dashboard Remoto.
 - **Implementação:** Após verificação, constatou-se que a lógica já estava integralmente presente no código (realizada durante a Demanda 2.1 em `dispatchWorker.ts`, `broadcastEvents.ts` e consumida em `useOfferBoard.ts`).
 - A execução limitou-se à correção documental, movendo a task para a aba de concluídos no `CHECKLIST.md` após comprovação de seu pleno funcionamento via análise estática e coerência sistêmica.
+
+## 2026-09-11 14:40 - Definição da Estratégia de WhatsApp
+- **Contexto:** Solicitação para executar o desenvolvimento da definição da estratégia de WhatsApp, optando entre modo exclusivamente assistido ou adoção de biblioteca não-oficial com risco aceito.
+- **Implementação:** Foi escolhida a adoção de biblioteca não-oficial para automação total. A execução limitou-se à atualização arquitetural e documental nos arquivos `CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL.md`.
+- No `CHECKLIST.md`, a task foi movida para Concluídas e a pendência do driver atualizada para indicar a adoção de biblioteca tipo Baileys/whatsapp-web.js.
+- No `TOOLS.md` e `FLUXO_OPERACIONAL.md`, o canal WhatsApp foi reclassificado de modo "Assistido" para "Automação total (não-oficial)", registrando formalmente o aceite do risco de banimento e rebaixando o botão "Copiar" a um fallback para essa integração.

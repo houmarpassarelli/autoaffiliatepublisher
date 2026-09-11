@@ -179,7 +179,7 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
 - [ ] **Driver TikTok (modo assistido)** (*preparação de criativo + legenda*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
-- [ ] **Driver WhatsApp Canais (modo assistido)** (*mensagem formatada pronta para colar — sem API oficial, sem automação*)
+- [ ] **Driver WhatsApp Canais (biblioteca não-oficial)** (*automação total via biblioteca tipo Baileys/whatsapp-web.js, com risco de banimento aceito*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 
 ---
@@ -214,14 +214,14 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Definir a estratégia de exposição segura do Dashboard Remoto** (*VPN, túnel reverso ou proxy com autenticação — o sistema não tem autenticação própria*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
-- [ ] **Definir a estratégia de WhatsApp** (*modo exclusivamente assistido, ou adoção de biblioteca não-oficial com o risco de banimento aceito*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 - [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [ ] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 
 ### Concluídas
+- [x] **Definir a estratégia de WhatsApp** (*Decidido: Adoção de biblioteca não-oficial para automação total no disparo para Canais, assumindo o risco de banimento da conta operadora*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 - [x] **Definir a política de divergência de preço na reverificação pré-disparo** (*Decidido: Abortar disparo em caso de mudança de preço ou esgotamento. A oferta tem `operatorId`, `scheduledFor` e canais limpos, retornando ao estado `OPEN` com novo preço para recadastro da copy. `DispatchLog` recebe `ABORTED_DUE_TO_DIVERGENCE`*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#82-reverificação-antes-do-disparo))*
 - [x] **Definir o provedor e modelo de LLM** (*Definido uso da OpenAI com modelo `gpt-4o-mini` pelo custo/benefício no volume de ingestão e uso de Structured Outputs*)
