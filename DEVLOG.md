@@ -708,3 +708,13 @@ Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs d
   - Implementação concreta do `reverifyOffer` no `ApiIngestor`, `RssIngestor` e `ScraperIngestor`.
   - Modificação do `dispatchWorker` para instanciar a fonte e validar o preço e disponibilidade imediatamente antes do disparo.
   - Aborto em caso de divergência: reseta o status para `OPEN`, atualiza o `priceCurrent`, anota `"ABORTED_DUE_TO_DIVERGENCE"` no `deliveryStatus` do `DispatchLog` e notifica via WebSocket (`OFFER_STATE_CHANGED`), removendo as propriedades de roteamento e de trava para devolvê-la intacta à fase de curadoria.
+
+## 2026-09-11 13:30 - Formalização do Broadcast OFFER_PUBLISHED
+- **Contexto:** Solicitação para executar o desenvolvimento do evento  e mover o card para a aba Concluídas no Dashboard Remoto.
+- **Implementação:** Após verificação, constatou-se que a lógica já estava integralmente presente no código (realizada durante a Demanda 2.1 em ,  e consumida em ). 
+- A execução limitou-se à correção documental, movendo a task para a aba de concluídos no  após comprovação de seu pleno funcionamento via análise estática e coerência sistêmica.
+
+## 2026-09-11 13:30 - Formalização do Broadcast OFFER_PUBLISHED
+- **Contexto:** Solicitação para executar o desenvolvimento do evento `OFFER_PUBLISHED` e mover o card para a aba Concluídas no Dashboard Remoto.
+- **Implementação:** Após verificação, constatou-se que a lógica já estava integralmente presente no código (realizada durante a Demanda 2.1 em `dispatchWorker.ts`, `broadcastEvents.ts` e consumida em `useOfferBoard.ts`).
+- A execução limitou-se à correção documental, movendo a task para a aba de concluídos no `CHECKLIST.md` após comprovação de seu pleno funcionamento via análise estática e coerência sistêmica.

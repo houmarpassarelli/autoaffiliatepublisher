@@ -166,6 +166,8 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 - [x] **Registro de `DispatchLog` a Cada Ação Resolutiva** (*assinatura desnormalizada do operador, SKU, canais e preço congelado, gravados a cada publicação; o descarte não gera log, por não ser publicação. O `deliveryStatus` nasce vazio: o resultado por canal pertence ao worker de disparo*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#25-coleção-dispatch_logs--auditoria-e-comissionamento))*
 
+- [x] **Broadcast `OFFER_PUBLISHED` na Conclusão do Job** (*move o card de Agendadas para Concluídas em todas as telas*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
 ### Pendentes
 - [ ] **Driver Telegram** (*Bot API — automação total, disparo imediato*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#4-apis-de-publicação-por-canal))*
@@ -179,8 +181,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
 - [ ] **Driver WhatsApp Canais (modo assistido)** (*mensagem formatada pronta para colar — sem API oficial, sem automação*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
-- [ ] **Broadcast `OFFER_PUBLISHED` na Conclusão do Job** (*move o card de Agendadas para Concluídas em todas as telas*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
 
 ---
 

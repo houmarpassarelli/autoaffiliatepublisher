@@ -260,3 +260,12 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 - **Contexto:** Reverificação da oferta na origem logo antes de disparar pelo `dispatchWorker.ts`.
 - **Decisão (Política de Divergência):** Abortar o disparo, preencher `deliveryStatus` de cada canal selecionado com "ABORTED_DUE_TO_DIVERGENCE" no `DispatchLog`, limpar o agendamento (`operatorId`, `scheduledFor`, `selectedChannels`) da oferta e devolvê-la ao status `OPEN` atualizando o preço. Emitir evento `OFFER_STATE_CHANGED`.
 - **Implementação:** Extensão da `IngestorDriver` com o método `reverifyOffer`, e adição da validação no início do job de envio (`dispatchWorker.ts`).
+
+## 2026-09-11 — 13:30 — Validação e Formalização do Broadcast OFFER_PUBLISHED
+
+**Contexto:** O solicitante comandou explicitamente a execução do desenvolvimento da feature "Broadcast OFFER_PUBLISHED na Conclusão do Job".
+
+**Escopo aprovado e executado:**
+
+1. **Auditoria de Código:** Foi confirmado que a funcionalidade já se encontrava plenamente implementada nos módulos `dispatchWorker.ts`, `broadcastEvents.ts` e `useOfferBoard.ts`, em virtude da execução da Fila BullMQ (Demanda 2.1) no dia 10/09/2026.
+2. **Organização:** Movido o respectivo item no `CHECKLIST.md` de "Pendentes" para "Implementados no Código", corrigindo o desvio documental constatado.
