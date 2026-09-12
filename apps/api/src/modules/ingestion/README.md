@@ -13,6 +13,5 @@ Responsável por toda a **descoberta determinística** de ofertas. Nenhuma etapa
 - Cálculo do desconto percentual e alimentação do `priceHistory`.
 - Reverificação de preço e disponibilidade antes do disparo.
 
-## Decisão em aberto
-
-Escolha única entre **Playwright** e **Puppeteer** — o projeto não deve manter as duas dependências (`CHECKLIST.md`, Categoria 8).
+## Ferramenta de Ingestão Dinâmica
+O projeto utiliza o **Playwright** para todas as necessidades de scraping de páginas dinâmicas ou SPAs.

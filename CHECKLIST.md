@@ -214,9 +214,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Definir a estratégia de exposição segura do Dashboard Remoto** (*VPN, túnel reverso ou proxy com autenticação — o sistema não tem autenticação própria*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
-- [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 ### Concluídas
+- [x] **Escolher entre Playwright e Puppeteer** (*Decidido: Playwright oficializado como única dependência para scraping de SPAs/páginas dinâmicas, mantendo a regra de dependência única*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [x] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 - [x] **Definir a estratégia de WhatsApp** (*Decidido: Adoção de biblioteca não-oficial para automação total no disparo para Canais, assumindo o risco de banimento da conta operadora*)

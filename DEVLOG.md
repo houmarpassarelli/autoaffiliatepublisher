@@ -820,3 +820,17 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
 
 ### 2. Frontend Administrativo
 - O CRUD de Fontes (Dashboard Administrativo) ganhou o checkbox obrigatório "Regras de Compliance Verificadas". O hint exibe de forma declarativa e contextual as restrições inerentes, como as do programa da Amazon (proibição de links em mensagens fechadas e obrigatoriedade de cadastro do perfil de associado para canais abertos).
+
+---
+
+## 2026-09-12 — Formalização do Playwright como Biblioteca de Ingestão Dinâmica
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
+
+### 1. Documentação Periférica
+- **`CHECKLIST.md`**: Pendência (Categoria 8) movida de "Pendentes" para "Concluídas", ratificando a adoção do Playwright.
+- **`TOOLS.md` e `ARQUITETURA.md`**: Menções ao Puppeteer apagadas, consolidando a matriz técnica.
+- **`DOSSIE.md`**: A pendência de decisão foi suprimida do item 8 de escopo de projeto.
+
+### 2. Documentação de Módulo
+- O arquivo `apps/api/src/modules/ingestion/README.md` teve a diretiva de "decisão em aberto" removida em favor da declaração taxativa do uso do Playwright, eliminando ruído sobre dependência ambígua e preservando o limite arquitetural da aplicação (única biblioteca para SPAs/headless scraping). Não foi necessária alteração de código, pois a dependência `playwright` (`v1.63.0`) já estava fixada no `package.json` do backend e em uso no arquivo `scraperIngestor.ts`.

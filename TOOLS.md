@@ -44,7 +44,6 @@ Reservado a lojas sem API aberta. Aponta para páginas específicas de oferta ("
 | **Axios** | Requisições HTTP a APIs e download de feeds. | Sempre que houver API ou feed. |
 | **Cheerio** | Parsing de HTML estático e XML/RSS. | Páginas renderizadas no servidor; feeds. |
 | **Playwright** | Navegador headless. | Páginas dinâmicas, SPAs, conteúdo carregado por JavaScript. |
-| **Puppeteer** | Alternativa ao Playwright. | Mesma finalidade; escolha única a fechar na execução. |
 | **node-cron** | Agendamento das varreduras por fonte. | Intervalo configurado por fonte no banco. |
 
 > **Fallback em Python:** previsto apenas para casos de *bypass* genuinamente complexo que o Node não resolva. A preferência declarada pelo usuário é **Node puro**; qualquer script Python é exceção justificada, não regra.

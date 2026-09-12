@@ -322,3 +322,19 @@ Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL
 3. **Interface / Dashboard Administrativo (`apps/dashboard-admin/src/screens/SourcesScreen.tsx`)**:
    - Adição ao `SourceDraft`, `EMPTY_DRAFT` e ao payload de submissão.
    - Inclusão do componente `<CheckboxField>` no final do formulário, com hint orientativo explícito das regras do programa.
+
+## 2026-09-12 — 01:05 — Formalização do Playwright como Biblioteca de Ingestão Dinâmica
+
+**Contexto:** O projeto tinha como pendência (Categoria 8 do `CHECKLIST.md`) a escolha entre Playwright e Puppeteer para web scraping, sendo regra do repositório manter apenas uma das duas dependências. Constatou-se que o Playwright já estava instalado (`v1.63.0`) no `apps/api/package.json` e importado/configurado no arquivo de ingestão base (`scraperIngestor.ts`), enquanto o Puppeteer não existia no código.
+
+**Escopo aprovado (Execução Direta):**
+
+1. **`CHECKLIST.md`**:
+   - Mover a task de escolha para a seção "Concluídas".
+2. **`TOOLS.md` e `ARQUITETURA.md`**:
+   - Remover as linhas e menções referentes ao Puppeteer.
+   - Apagar a menção de "decisão em aberto".
+3. **`DOSSIE.md`**:
+   - Atualizar a lista de "Decisões em aberto" removendo essa pendência e ajustando referências anteriores.
+4. **`apps/api/src/modules/ingestion/README.md`**:
+   - Atualizar a declaração do módulo para oficializar a exclusividade do Playwright.

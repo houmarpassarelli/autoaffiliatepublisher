@@ -17,7 +17,7 @@ A aplicação é um **backend único** que expõe duas interfaces distintas. Nã
 | **Tempo Real** | WebSocket via **`@fastify/websocket`** | Sincronização do estado global de ofertas entre todos os operadores conectados e controle de presença. Plugin nativo do Fastify, sem servidor paralelo nem protocolo próprio. |
 | **Filas & Agendamento** | BullMQ sobre Redis | Fila de disparos com delay progressivo anti-spam, retentativas e concorrência controlada. |
 | **Agendamento de Coleta** | Cron interno (`node-cron`) | Dispara a varredura de cada fonte conforme o intervalo configurado em banco. |
-| **Ingestão Dinâmica** | Puppeteer / Playwright | Scraping de páginas dinâmicas e SPAs de lojas sem API aberta. |
+| **Ingestão Dinâmica** | Playwright | Scraping de páginas dinâmicas e SPAs de lojas sem API aberta. |
 | **Ingestão Estática** | Cheerio / Axios | Scraping de páginas estáticas e leitura de feeds RSS/XML/CSV. |
 | **Inteligência** | LLM via API | Refinamento de copywriting a partir de payload já estruturado. **Nunca** usado para navegar ou extrair. |
 | **Frontend (2 Dashboards)** | Vite + React + TypeScript, com Tabler.io UI Kit + Tailwind CSS | Interfaces limpas, **sem animações**, reativas via WebSocket. O Tailwind entra sem o *preflight*, que sobrescreveria os estilos base do Tabler. |
@@ -88,7 +88,7 @@ A regra arquitetural mais importante do projeto, registrada como correção de p
 Responsável por todos os mecanismos de captura:
 - **Consumo de APIs oficiais** de afiliados quando disponíveis (caminho preferencial).
 - **Leitura de feeds** RSS/XML/CSV das redes de afiliados.
-- **Web scraping dirigido** com Puppeteer/Playwright (páginas dinâmicas) e Cheerio/Axios (páginas estáticas), apontado para páginas específicas de oferta.
+- **Web scraping dirigido** com Playwright (páginas dinâmicas) e Cheerio/Axios (páginas estáticas), apontado para páginas específicas de oferta.
 - **Agendamento**: Cron jobs internos, configuráveis por fonte via banco de dados (ex.: a cada 1 hora por fonte cadastrada).
 - **Reverificação pré-disparo**: antes de publicar em canal público, o sistema revalida preço e disponibilidade — ofertas relâmpago acabam rápido e link quebrado queima a audiência.
 
