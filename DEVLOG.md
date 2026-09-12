@@ -724,3 +724,61 @@ Nenhum erro de build esperado, uma vez que a implementação se apoia nos DTOs d
 - **Implementação:** Foi escolhida a adoção de biblioteca não-oficial para automação total. A execução limitou-se à atualização arquitetural e documental nos arquivos `CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL.md`.
 - No `CHECKLIST.md`, a task foi movida para Concluídas e a pendência do driver atualizada para indicar a adoção de biblioteca tipo Baileys/whatsapp-web.js.
 - No `TOOLS.md` e `FLUXO_OPERACIONAL.md`, o canal WhatsApp foi reclassificado de modo "Assistido" para "Automação total (não-oficial)", registrando formalmente o aceite do risco de banimento e rebaixando o botão "Copiar" a um fallback para essa integração.
+
+---
+
+## 2026-09-12 — Contagem Regressiva na Aba Agendadas
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 2026-09-12, 00:39.
+
+Encerra a Categoria 5 do `CHECKLIST.md`: o Dashboard Remoto passa a cumprir integralmente o `FLUXO_OPERACIONAL.md`, Seção 3.2 — horário previsto de envio, canais selecionados e **contagem regressiva** por item.
+
+### 1. Estado encontrado
+
+`ResolvedSummary`, dentro de `OfferCard.tsx`, já exibia operador, canais pelo rótulo e o horário previsto de envio. Faltava apenas o countdown vivo. O dado necessário já trafegava: `scheduledFor` é campo do `offerDtoSchema` e já era mantido em dia por `applyTransition`, tanto no retorno da própria ação do operador quanto no broadcast recebido dos demais. Nenhuma alteração de contrato, de rota ou de backend foi necessária.
+
+### 2. `packages/ui/src/hooks/useCountdown.ts` (novo)
+
+Hook do kit compartilhado, ao lado de `useBackendHealth` e `useAdminResource`. Duas decisões de projeto merecem registro:
+
+**Relógio único de 1 Hz, no escopo do módulo.** Um `setInterval` é compartilhado por todos os countdowns vivos, em vez de um timer por card. A aba "Agendadas" pode conter dezenas de itens simultâneos; timers independentes derivam entre si em poucos minutos, e os cards passariam a virar o segundo em momentos visivelmente diferentes — a tela pareceria instável sem que nada estivesse errado. O timer nasce com o primeiro assinante e é destruído quando o último sai: sem card agendado na tela, nenhum tique é agendado.
+
+**O restante é recalculado, nunca decrementado.** A cada tique o hook remede a distância a partir de `Date.now()`. O navegador estrangula timers de aba em segundo plano, e um contador decrementado acumularia o atraso de cada tique suprimido — o operador voltaria à aba e leria um tempo maior do que o real, justamente no dado que existe para dizer quando o disparo sai. O recálculo devolve o valor certo já na primeira renderização após a volta.
+
+Ao vencer, o hook se desinscreve sozinho do relógio: um card que já passou da hora não consome mais tique nenhum enquanto aguarda a confirmação do servidor. Alvo nulo ou data irregular são tratados como vencidos, em vez de propagarem `NaN` para a interface.
+
+### 3. `packages/ui/src/formatters.ts`
+
+Acrescentado `formatCountdown(remainingMs)`, junto de `formatCurrency` e `formatDateTime` e pelo mesmo motivo já declarado no cabeçalho do arquivo: a mesma grandeza escrita do mesmo jeito em todo o produto. A unidade maior é suprimida enquanto zerada — `09 s`, `04 min 09 s`, `1 h 04 min 09 s` — porque o número é lido de relance, ao lado do horário absoluto que ele qualifica. Valores negativos são clampados em zero: quem decide o que significa um alvo vencido é a tela.
+
+### 4. `apps/dashboard-remote/src/components/OfferCountdown.tsx` (novo)
+
+A camada de domínio da apresentação — o kit fica genérico, a regra de leitura fica no dashboard remoto. Badge em tom `info` no regime normal e `warning` abaixo de 60 segundos, para que a saída iminente seja percebida sem precisar ler o número.
+
+**O rótulo do vencimento é "Disparo iminente", e nunca "Disparado".** O card só deixa esta aba quando o servidor confirma a publicação pelo broadcast `OFFER_PUBLISHED`. Afirmar aqui um disparo que o backend ainda não confirmou romperia a fronteira do Thin Client e poderia mentir sobre uma entrega que falhou ou que foi abortada pela reverificação de preço — o caminho `ABORTED_DUE_TO_DIVERGENCE` devolve a oferta a `OPEN`, e quem chegou a ler "Disparado" teria lido o oposto do que aconteceu.
+
+O elemento usa `role="timer"`, cuja região viva é `off` por padrão: o leitor de tela consulta o valor sob demanda em vez de ser interrompido a cada segundo, e o horário absoluto ao lado permanece como a informação autoritativa.
+
+### 5. `apps/dashboard-remote/src/components/OfferCard.tsx`
+
+O countdown entra na linha "Envio previsto" do `ResolvedSummary`, ao lado do horário absoluto — o horário informa *quando*, a contagem informa *quanto falta*, e separá-los obrigaria o operador a cruzar dois pontos da tela. O alvo é derivado como `status === SCHEDULED ? scheduledFor : null`: a aba "Concluídas" exibe "Disparo" e não conta nada, porque contar para trás um disparo consumado não informa ao operador.
+
+### 6. Validações executadas
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run typecheck` nos cinco pacotes | Sem erros |
+| ESLint sobre os arquivos da sessão | Sem apontamentos |
+| Prettier sobre os arquivos da sessão | Em conformidade |
+| `formatCountdown` — 13 casos de fronteira (zero, negativo, 999 ms, viradas de 59 s, 59 min 59 s e 24 h) | Todos passaram |
+| `useCountdown` — 13 cenários com React real | Todos passaram |
+
+Os cenários do hook foram executados com `react-test-renderer` instalado em caráter temporário e sem gravação em manifesto (`--no-save --no-package-lock`), e removido em seguida; `package.json` e `package-lock.json` foram conferidos como idênticos ao estado anterior. O projeto continua sem infraestrutura de testes própria. Foi verificado que três cards simultâneos criam **um** timer e permanecem em sincronia; que o timer é destruído quando o último card sai; que alvo passado e alvo nulo não chegam a assinar o relógio; e que um alvo que vence durante a execução desliga o relógio sozinho.
+
+### 7. Ponto de extensão declarado
+
+O countdown roda sobre o **relógio do cliente**. Um aparelho com hora desregulada exibirá contagem desregulada — o horário absoluto exibido ao lado permanece correto, por vir do servidor. Corrigir exigiria sondar o desvio entre o relógio local e o do backend e aplicá-lo como deslocamento na medição; fica registrado como ponto de extensão, não implementado nesta sessão.
+
+### 8. Efeito colateral de formatação
+
+Ao rodar o Prettier sobre `OfferCard.tsx`, uma chamada a `replaceUrlInCopy` escrita em sessão anterior foi quebrada em múltiplas linhas por exceder a largura configurada. É reformatação, não mudança de comportamento, e foi mantida para que o arquivo passe em `prettier --check`.

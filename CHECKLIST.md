@@ -150,10 +150,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#5-equivalência-de-ação--copiar-vale-como-publicar))*
 - [x] **Botão "Regenerar Copy"** (*reenvia o payload ao LLM quando o texto gerado não ficou atrativo*)
   *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 4)*
+- [x] **Contagem Regressiva na Aba Agendadas** (*countdown vivo ao lado do horário previsto de envio, atualizado a cada segundo por um relógio único compartilhado por todos os cards — e não um timer por card, que faria os itens virarem o segundo em momentos diferentes. O restante é recalculado a partir do relógio a cada tique, nunca decrementado, o que o mantém correto depois de a aba passar tempo em segundo plano. No vencimento exibe **"Disparo iminente"**, e nunca "Disparado": o card só migra para Concluídas quando o servidor confirma pelo `OFFER_PUBLISHED`*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#32-aba-agendadas-na-fila-de-disparo) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 12/09/2026)*
 
 ### Pendentes
-- [ ] **Contagem Regressiva na Aba Agendadas** (*o horário previsto de envio, os canais selecionados e a assinatura do operador já são exibidos; falta o countdown por item*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#32-aba-agendadas-na-fila-de-disparo))*
+*(nenhum item)*
 
 ---
 

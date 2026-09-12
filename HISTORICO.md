@@ -279,3 +279,17 @@ Foi decidido adotar uma biblioteca não-oficial (automação total com risco de 
 
 **Escopo aprovado e executado:**
 Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL.md`) para formalizar a escolha pela automação total via biblioteca não-oficial, com o risco de banimento plenamente aceito, rebaixando o modo assistido para fallback. O item foi movido para a lista de tarefas concluídas.
+
+## 2026-09-12 — 00:39 — Contagem Regressiva na Aba Agendadas
+
+**Contexto:** O solicitante comandou explicitamente "EXECUTE O DESENVOLVIMENTO: Contagem Regressiva na Aba Agendadas". A auditoria do código confirmou que o horário previsto de envio, os canais selecionados e a assinatura do operador já eram exibidos pelo `ResolvedSummary` do `OfferCard.tsx`; faltava apenas o countdown vivo por item, exigido pelo `FLUXO_OPERACIONAL.md`, Seção 3.2.
+
+**Escopo aprovado:**
+
+1. **`packages/ui/src/hooks/useCountdown.ts` (novo):** hook genérico do kit com relógio único de 1 Hz no escopo do módulo — um `setInterval` compartilhado por todos os assinantes, em vez de um timer por card, para que dezenas de cards agendados não criem dezenas de timers derivando entre si. O tempo restante é recalculado a partir de `Date.now()` a cada tique, nunca decrementado, o que o torna imune ao *throttling* de aba em segundo plano.
+2. **`packages/ui/src/formatters.ts` (edição):** `formatCountdown(remainingMs)`, ao lado dos demais formatadores, com saída em pt-BR e supressão da unidade maior quando zerada (`1 h 04 min 09 s`, `04 min 09 s`, `09 s`), clampada em zero.
+3. **`packages/ui/src/index.ts` (edição):** exportação do novo hook.
+4. **`apps/dashboard-remote/src/components/OfferCountdown.tsx` (novo):** camada de domínio da apresentação — `Badge` com tom por urgência e, no vencimento, o rótulo "Disparo iminente", nunca "Disparado": o card só deixa a aba quando o servidor emite `OFFER_PUBLISHED`.
+5. **`apps/dashboard-remote/src/components/OfferCard.tsx` (edição):** countdown ao lado do horário absoluto na linha "Envio previsto", exclusivo do estado `SCHEDULED`.
+
+**Limitação declarada:** o countdown roda sobre o relógio do cliente; um aparelho com hora desregulada exibe contagem desregulada. O horário absoluto ao lado permanece correto, por vir do servidor. A correção do desvio exigiria sondar o horário do backend e fica registrada como ponto de extensão.

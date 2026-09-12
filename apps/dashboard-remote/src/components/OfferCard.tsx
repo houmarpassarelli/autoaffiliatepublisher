@@ -14,6 +14,7 @@ import {
 import { discardOffer, dispatchOffer, regenerateCopy } from '../api/offersApi.js';
 import type { OfferTransition } from '../state/useOfferBoard.js';
 import { ChannelSelector } from './ChannelSelector.js';
+import { OfferCountdown } from './OfferCountdown.js';
 
 export interface OfferCardProps {
   offer: OfferDto;
@@ -155,7 +156,11 @@ export function OfferCard({
       try {
         const { injectOperatorSubId, replaceUrlInCopy } = await import('@aap/shared');
         const trackedUrl = injectOperatorSubId(offer.affiliateUrl, operator.id);
-        const copyWithSubId = replaceUrlInCopy(offer.aiCopy.messaging, offer.affiliateUrl, trackedUrl);
+        const copyWithSubId = replaceUrlInCopy(
+          offer.aiCopy.messaging,
+          offer.affiliateUrl,
+          trackedUrl,
+        );
         await navigator.clipboard.writeText(copyWithSubId);
       } catch (err) {
         throw new Error('Não foi possível copiar para a área de transferência.', { cause: err });
@@ -349,6 +354,13 @@ function ResolvedSummary({
 }): React.JSX.Element {
   const labelByKey = new Map(channels.map((channel) => [channel.key, channel.label]));
 
+  /**
+   * Alvo da contagem regressiva, que pertence apenas à fila de disparo. Em
+   * "Concluídas" o mesmo campo já é passado, e contar para trás um disparo
+   * consumado não informa nada ao operador.
+   */
+  const countdownTarget = offer.status === OfferStatus.SCHEDULED ? offer.scheduledFor : null;
+
   return (
     <dl className="row mt-3 mb-0">
       <dt className="col-sm-3">Operador</dt>
@@ -364,8 +376,9 @@ function ResolvedSummary({
       <dt className="col-sm-3">
         {offer.status === OfferStatus.SCHEDULED ? 'Envio previsto' : 'Disparo'}
       </dt>
-      <dd className="col-sm-9 mb-0">
-        {offer.scheduledFor ? formatDateTime(offer.scheduledFor) : '—'}
+      <dd className="col-sm-9 mb-0 d-flex flex-wrap align-items-center gap-2">
+        <span>{offer.scheduledFor ? formatDateTime(offer.scheduledFor) : '—'}</span>
+        {countdownTarget ? <OfferCountdown scheduledFor={countdownTarget} /> : null}
       </dd>
     </dl>
   );
