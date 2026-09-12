@@ -307,3 +307,18 @@ Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL
    - A função `filterNewOffers`, que antes apenas jogava foras os dados repetidos, agora fará uma correlação.
    - A função acionará um `OfferModel.bulkWrite` efetuando o `$push` no campo `priceHistory` de cada oferta repetida no banco, usando o `priceCurrent` da captura atual e `capturedAt: new Date()`.
    - O array `priceHistory` passa a refletir oscilações de preço independentemente do status atual da oferta na curadoria.
+
+## 2026-09-12 — 00:56 — Adição da verificação de compliance obrigatória no cadastro de fontes
+
+**Contexto:** O projeto exige que o operador confirme a verificação das regras de compliance de cada programa de afiliados (ex: restrições da Amazon para mensagens privadas) no momento da criação/edição de uma fonte, garantindo conformidade.
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Contratos e Schemas (`packages/shared/src/schemas/sourceSchemas.ts`)**:
+   - Adição do campo `complianceVerified: z.boolean()` no `sourceDtoSchema` e no `sourceWritableFieldsSchema`, com validação explícita (`.refine()`) obrigando que o valor seja `true` em qualquer submissão.
+2. **Banco de Dados / Model (`apps/api/src/database/models/sourceModel.ts`)**:
+   - Adição da propriedade `complianceVerified: boolean` na interface `SourceAttributes` e no schema do Mongoose (`required: true, default: false`).
+   - Mapeamento e propagação no `sourceMapper.ts` e `sourceService.ts`.
+3. **Interface / Dashboard Administrativo (`apps/dashboard-admin/src/screens/SourcesScreen.tsx`)**:
+   - Adição ao `SourceDraft`, `EMPTY_DRAFT` e ao payload de submissão.
+   - Inclusão do componente `<CheckboxField>` no final do formulário, com hint orientativo explícito das regras do programa.

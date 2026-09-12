@@ -51,6 +51,7 @@ export async function createSource(input: SourceCreateInput): Promise<SourceDto>
     cronExpression: input.cronExpression,
     aiPromptTemplate: input.aiPromptTemplate,
     active: input.active,
+    complianceVerified: input.complianceVerified,
     lastRunAt: null,
   });
 
@@ -76,6 +77,7 @@ export async function updateSource(sourceId: string, input: SourceUpdateInput): 
   source.cronExpression = input.cronExpression;
   source.aiPromptTemplate = input.aiPromptTemplate;
   source.active = input.active;
+  source.complianceVerified = input.complianceVerified;
   source.credentials = applyCredentialsPatch(source.credentials, input.credentials);
 
   await withUniqueConstraint(() => source.save(), SOURCE_FIELD_LABELS);

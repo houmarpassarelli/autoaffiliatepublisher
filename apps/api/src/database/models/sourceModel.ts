@@ -16,6 +16,7 @@ export interface SourceAttributes {
   cronExpression: string; // Intervalo de varredura (ex.: '0 * * * *')
   aiPromptTemplate: string; // Instrução específica de como a IA reescreve esta fonte
   active: boolean; // Fonte habilitada para varredura
+  complianceVerified: boolean; // Confirmação de leitura das regras de compliance
   lastRunAt: Date | null; // Última execução bem-sucedida da coleta
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +40,7 @@ const sourceSchema = new Schema<SourceAttributes>(
     cronExpression: { type: String, required: true, trim: true },
     aiPromptTemplate: { type: String, required: true },
     active: { type: Boolean, required: true, default: true },
+    complianceVerified: { type: Boolean, required: true, default: false },
     lastRunAt: { type: Date, default: null },
   },
   {

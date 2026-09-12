@@ -216,10 +216,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 - [ ] **Escolher entre Playwright e Puppeteer** (*evitar manter as duas dependências no projeto*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
-- [ ] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
-
 ### Concluídas
+- [x] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#5-regras-dos-programas-de-afiliados-compliance))*
 - [x] **Definir a estratégia de WhatsApp** (*Decidido: Adoção de biblioteca não-oficial para automação total no disparo para Canais, assumindo o risco de banimento da conta operadora*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 - [x] **Definir a política de divergência de preço na reverificação pré-disparo** (*Decidido: Abortar disparo em caso de mudança de preço ou esgotamento. A oferta tem `operatorId`, `scheduledFor` e canais limpos, retornando ao estado `OPEN` com novo preço para recadastro da copy. `DispatchLog` recebe `ABORTED_DUE_TO_DIVERGENCE`*)

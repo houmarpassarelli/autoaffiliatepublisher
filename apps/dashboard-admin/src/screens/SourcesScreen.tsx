@@ -28,6 +28,7 @@ interface SourceDraft {
   cronExpression: string;
   aiPromptTemplate: string;
   active: boolean;
+  complianceVerified: boolean;
   credentials: CredentialsPatch;
 }
 
@@ -46,6 +47,7 @@ const EMPTY_DRAFT: SourceDraft = {
   cronExpression: '0 * * * *',
   aiPromptTemplate: '',
   active: true,
+  complianceVerified: false,
   credentials: {},
 };
 
@@ -109,6 +111,7 @@ export function SourcesScreen(): React.JSX.Element {
               cronExpression: source.cronExpression,
               aiPromptTemplate: source.aiPromptTemplate,
               active: source.active,
+              complianceVerified: source.complianceVerified,
               credentials: {},
             }
           : { ...EMPTY_DRAFT }
@@ -122,6 +125,7 @@ export function SourcesScreen(): React.JSX.Element {
           cronExpression: draft.cronExpression,
           aiPromptTemplate: draft.aiPromptTemplate,
           active: draft.active,
+          complianceVerified: draft.complianceVerified,
           credentials: draft.credentials,
         };
 
@@ -215,6 +219,16 @@ export function SourcesScreen(): React.JSX.Element {
             hint="Desativar interrompe a varredura sem apagar o cadastro nem o histórico de ofertas."
             onChange={(event) => {
               patchDraft({ active: event.target.checked });
+            }}
+          />
+
+          <CheckboxField
+            label="Regras de Compliance Verificadas"
+            checked={draft.complianceVerified}
+            disabled={disabled}
+            hint="Confirmo que verifiquei as regras deste programa (ex: a Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado)."
+            onChange={(event) => {
+              patchDraft({ complianceVerified: event.target.checked });
             }}
           />
         </>

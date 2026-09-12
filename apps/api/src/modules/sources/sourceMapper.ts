@@ -28,6 +28,7 @@ export function toSourceDto(source: MappableSource): SourceDto {
     cronExpression: source.cronExpression,
     aiPromptTemplate: source.aiPromptTemplate,
     active: source.active,
+    complianceVerified: source.complianceVerified,
     lastRunAt: source.lastRunAt ? source.lastRunAt.toISOString() : null,
     createdAt: source.createdAt.toISOString(),
     updatedAt: source.updatedAt.toISOString(),

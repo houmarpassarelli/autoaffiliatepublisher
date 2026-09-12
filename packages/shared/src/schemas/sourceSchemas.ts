@@ -23,6 +23,7 @@ export const sourceDtoSchema = z.object({
   cronExpression: z.string(), // Intervalo de varredura (ex.: '0 * * * *')
   aiPromptTemplate: z.string(), // Instrução específica de como a IA reescreve esta fonte
   active: z.boolean(), // Fonte habilitada para varredura
+  complianceVerified: z.boolean(), // Confirmação de leitura das regras de compliance
   lastRunAt: isoDateSchema.nullable(), // Última execução bem-sucedida da coleta
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
@@ -48,6 +49,9 @@ const sourceWritableFieldsSchema = z.object({
     .trim()
     .min(1, 'Informe como a IA deve reescrever as ofertas desta fonte.'),
   active: z.boolean(), // Fonte habilitada para varredura
+  complianceVerified: z.boolean().refine((val) => val === true, {
+    message: 'É obrigatório confirmar a verificação das regras de compliance.',
+  }), // Confirmação obrigatória
 });
 
 /** Cadastro de uma fonte nova no Dashboard Administrativo. */

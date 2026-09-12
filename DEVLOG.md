@@ -806,3 +806,17 @@ O serviço de deduplicação foi aprimorado.
 | --- | --- |
 | `npm run typecheck` nos pacotes `apps/api` e outros `workspaces` | Compilou corretamente, as interfaces `ObjectId` casaram conforme os Modelos do Mongoose. |
 | Alteração em `deduplicationService.ts` | O BulkWrite processa array `bulkOps` adequadamente e se nenhum for montado ignora a chamada a DB. |
+
+---
+
+## 2026-09-12 — Adição da verificação de compliance obrigatória no cadastro de fontes
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
+
+### 1. Backend e Shared
+- O schema de compartilhamento (`sourceSchemas.ts`) recebeu `complianceVerified: z.boolean()` no DTO e como validação estrita no payload de escrita, impedindo submissões sem o aceite.
+- O model de fonte (`sourceModel.ts`) no Mongoose foi estendido para incluir `complianceVerified: { type: Boolean, required: true, default: false }`.
+- O mapeador e os serviços atualizaram a ponte do DTO para o Model sem expor defaults indesejados.
+
+### 2. Frontend Administrativo
+- O CRUD de Fontes (Dashboard Administrativo) ganhou o checkbox obrigatório "Regras de Compliance Verificadas". O hint exibe de forma declarativa e contextual as restrições inerentes, como as do programa da Amazon (proibição de links em mensagens fechadas e obrigatoriedade de cadastro do perfil de associado para canais abertos).
