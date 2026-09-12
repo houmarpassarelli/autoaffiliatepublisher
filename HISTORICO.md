@@ -338,3 +338,16 @@ Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL
    - Atualizar a lista de "Decisões em aberto" removendo essa pendência e ajustando referências anteriores.
 4. **`apps/api/src/modules/ingestion/README.md`**:
    - Atualizar a declaração do módulo para oficializar a exclusividade do Playwright.
+
+## 2026-09-12 — 01:17 — Criptografia das Credenciais em Banco
+
+**Contexto:** As credenciais das fontes e canais de destino são atualmente armazenadas em texto claro no banco de dados. Como `apps/api/src/database/credentials.ts` concentra o fluxo de modificação (patch) e leitura das chaves, ele é o local ideal para centralizar a camada de criptografia. Os *models* e *DTOs* permanecerão inalterados, e o Dashboard continuará recebendo apenas a lista das chaves disponíveis.
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Configuração de Ambiente (`apps/api/src/config/env.ts`):** Adicionar a variável obrigatória `CREDENTIALS_SECRET` via Zod.
+2. **Criptografia (`apps/api/src/database/credentials.ts`):** Adicionar funções internas auxiliares `encryptValue()` e `decryptValue()` com AES-256-GCM. A chave de encriptação será derivada do `CREDENTIALS_SECRET` com SHA-256. Atualizar `applyCredentialsPatch` para encriptar e adicionar a função `getDecryptedCredentials()`.
+3. **Injeção nas Integrações Externas (`apps/api/src/modules/ingestion/drivers/apiIngestor.ts`):** Extrair headers originais pela nova função `getDecryptedCredentials()`.
+4. **Variáveis Locais:** Inserir mock de `CREDENTIALS_SECRET` e `OPENAI_API_KEY` nos arquivos `.env` e `.env.example`.
+5. **Atualizações de Histórico e Documentação:** Concluir registros.
+

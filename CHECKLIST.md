@@ -86,11 +86,10 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 - [x] **Controle de Presença Ativa e Validação das Mensagens do Cliente** (*`OPERATOR_CLAIM` com resposta tipada de aceite ou recusa, `HEARTBEAT`, e validação em tempo de execução de tudo que chega pelo socket*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#32-mensagens-enviadas-pelo-cliente))*
 - [x] **Índices Obrigatórios do MongoDB** (*`{status,createdAt:-1}`, `{dedupeHash}` único, `{externalSku,sourceId}` e `{operatorId,resolvedAt:-1}` aplicados por `ensureIndexes()` no bootstrap e conferidos no banco; acrescentado `{scheduledFor:-1}` em 09/09/2026, que sustenta a consulta do horizonte da fila de disparo, e `{sourceName,dispatchedAt:-1}` e `{channels,dispatchedAt:-1}` em `dispatch_logs`, que sustentam os filtros de loja e de canal do painel de auditoria — todos compostos com o campo da ordenação, para que o filtro não force varredura*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
+- [x] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` usando AES-256-GCM. A cifra/decifra foi abstraída em `apps/api/src/database/credentials.ts`, não alterando contrato de model ou DTO.*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 
 ### Pendentes
-- [ ] **Criptografia das Credenciais em Banco** (*`sources.credentials` e `channels.credentials` — método a definir. Os dois CRUDs já escrevem credenciais, e `apps/api/src/database/credentials.ts` concentra a leitura e a gravação: é o ponto único onde a criptografia entra, sem alterar contrato de model nem de DTO*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Migrar a imagem do MongoDB para a linha 8.x** (*fixada em `mongo:7` no `docker-compose.yml`: as imagens 8.x recusam iniciar nesta máquina com "Linux kernel versions 6.19 and newer has a known incompatibility" — SERVER-121912*)
   *(Ref: [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 08/09/2026, item 5)*
 
@@ -210,11 +209,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [ ] **Definir se o descarte deve pedir confirmação** (*`DISCARDED` é terminal e bloqueia o produto permanentemente na deduplicação da ingestão; hoje um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade de 5 a 10 segundos por decisão*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
-- [ ] **Definir o método de criptografia das credenciais em banco**
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [ ] **Definir a estratégia de exposição segura do Dashboard Remoto** (*VPN, túnel reverso ou proxy com autenticação — o sistema não tem autenticação própria*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 ### Concluídas
+- [x] **Definir o método de criptografia das credenciais em banco** (*Decidido: AES-256-GCM implementado no arquivo database/credentials.ts, abstraindo a cifra/decifra de Models/DTOs.*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [x] **Escolher entre Playwright e Puppeteer** (*Decidido: Playwright oficializado como única dependência para scraping de SPAs/páginas dinâmicas, mantendo a regra de dependência única*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#2-bibliotecas-de-ingestão))*
 - [x] **Verificar compliance de cada programa de afiliados no cadastro da fonte** (*Amazon proíbe links em mensagens privadas fechadas; canais abertos exigem cadastro no perfil de associado*)

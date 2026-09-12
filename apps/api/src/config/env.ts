@@ -43,6 +43,9 @@ const envSchema = z.object({
   // Chaves de API de LLM
   OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY é obrigatória para gerar copy.'),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+
+  // Criptografia das credenciais no banco (sources e channels)
+  CREDENTIALS_SECRET: z.string().min(16, 'CREDENTIALS_SECRET deve ter pelo menos 16 caracteres.'),
 });
 
 export type Env = z.infer<typeof envSchema>;

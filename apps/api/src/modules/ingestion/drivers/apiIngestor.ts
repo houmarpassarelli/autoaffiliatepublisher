@@ -3,13 +3,17 @@ import axios from 'axios';
 import type { IngestorDriver, RawOffer } from '../contracts.js';
 import type { SourceDocument } from '../../../database/models/sourceModel.js';
 
+import { getDecryptedCredentials } from '../../../database/credentials.js';
+
 export class ApiIngestor implements IngestorDriver {
   public async fetchOffers(source: SourceDocument): Promise<RawOffer[]> {
     try {
-      // Montamos os headers baseados nas credenciais
+      // Montamos os headers baseados nas credenciais descriptografadas
       const headers: Record<string, string> = {};
-      if (source.credentials && source.credentials.size > 0) {
-        for (const [key, value] of source.credentials.entries()) {
+      
+      const decryptedCredentials = getDecryptedCredentials(source.credentials);
+      if (decryptedCredentials.size > 0) {
+        for (const [key, value] of decryptedCredentials.entries()) {
           // Simplificação: injetamos todas as credenciais no header. 
           // Numa implementação real para cada API (ex: Shopee, Amazon),
           // o mapeamento precisaria ser específico ou haver uma camada de adapter.

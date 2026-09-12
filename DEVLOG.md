@@ -834,3 +834,22 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
 
 ### 2. Documentação de Módulo
 - O arquivo `apps/api/src/modules/ingestion/README.md` teve a diretiva de "decisão em aberto" removida em favor da declaração taxativa do uso do Playwright, eliminando ruído sobre dependência ambígua e preservando o limite arquitetural da aplicação (única biblioteca para SPAs/headless scraping). Não foi necessária alteração de código, pois a dependência `playwright` (`v1.63.0`) já estava fixada no `package.json` do backend e em uso no arquivo `scraperIngestor.ts`.
+
+---
+
+## 2026-09-12 — Criptografia das Credenciais em Banco
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
+
+### 1. Implementação da Criptografia (AES-256-GCM)
+- Adicionado AES-256-GCM para as credenciais das fontes e dos canais, diretamente em `apps/api/src/database/credentials.ts`. 
+- `CREDENTIALS_SECRET` adicionado em `.env` e validado em `env.ts`.
+- `applyCredentialsPatch` atualizado para receber/recuperar texto descriptografado, fazer o merge patch e armazenar tudo criptografado.
+
+### 2. Desacoplamento nas Integrações
+- O Dashboard administrativo se mantém inalterado e não tem contato com os valores. Ele continua lendo e renderizando chaves através de `toCredentialKeys`.
+- No lado servidor, integrações reais como o `ApiIngestor` passam a consumir as credenciais originais chamando `getDecryptedCredentials()`. A injeção na requisição HTTP ocorre normalmente e em segurança, limitando o tempo de vida da chave descriptografada apenas ao instante do uso e em memória temporária.
+
+### 3. Conclusão da Categoria 8
+- A decisão em aberto no checklist sobre criptografia das credenciais em banco foi encerrada.
+
