@@ -798,6 +798,20 @@ Criamos um utilitário exclusivo para as regras associadas à construção e cá
 O serviço de deduplicação foi aprimorado.
 - Antes: identificava as ofertas com hash/sku repetidos através de um `find()` no MongoDB e as excluía do lote resultante (`rawOffers`), devolvendo apenas as inéditas. A oscilação de preço das repetidas se perdia.
 - Agora: As ofertas preexistentes detectadas passam a acionar uma rotina de `bulkWrite`. Nós relacionamos as repetidas à `RawOffer` atual do lote e acrescentamos a informação de `$push` no subdocumento `priceHistory` usando o `priceCurrent` mais recente e a data da nova captura (`new Date()`). 
+
+## 2026-09-12 — 02:34 — Definição da Estratégia de Exposição Segura do Dashboard Remoto
+
+**Contexto:** O solicitante demandou a definição e documentação da estratégia de exposição segura do Dashboard Remoto para acesso externo ("VPN, túnel reverso ou proxy com autenticação").
+
+### 1. Estratégia Adotada
+Foi decidido utilizar **Cloudflare Tunnels com Cloudflare Zero Trust (Access)**. Esta abordagem atende aos requisitos porque:
+- O túnel reverso (`cloudflared`) permite expor o Dashboard sem precisar abrir portas locais, mitigando restrições de rede como CGNAT.
+- O Cloudflare Access funciona como o proxy autenticado, bloqueando acessos anônimos na borda (com e-mail OTP, SSO, etc.), solucionando o fato de que a aplicação não implementa sistema próprio de autenticação.
+
+### 2. Implementação e Documentação
+- `INFRA_EXPOSICAO.md` foi criado, contendo o passo a passo para configuração de infraestrutura no Cloudflare e levantamento local do túnel.
+- Inclusão do container `cloudflared` (imagem oficial) no `docker-compose.yml`, orquestrado junto aos demais serviços de persistência e com a configuração da variável ambiente de token `CLOUDFLARE_TUNNEL_TOKEN`.
+- A seção 8 do arquivo `TOOLS.md` foi reescrita documentando a estratégia aprovada e o arquivo `CHECKLIST.md` foi devidamente atualizado.
 - Isso garante a gravação e evolução do histórico (série temporal) a cada recaptura sem burlar a lógica principal da deduplicação e independentemente do `status` (mesmo `DISCARDED`).
 
 ### 3. Validações executadas

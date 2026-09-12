@@ -38,8 +38,21 @@ services:
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
-      timeout: 5s
       retries: 5
+
+  # Túnel Reverso Cloudflare (Zero Trust)
+  # Expõe o Dashboard Remoto de forma segura sem abrir portas locais.
+  # Requer a variável CLOUDFLARE_TUNNEL_TOKEN no .env.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: aap-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    # host.docker.internal permite que o cloudflared resolva portas publicadas no host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   mongodb-data:

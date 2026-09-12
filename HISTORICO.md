@@ -351,3 +351,15 @@ Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL
 4. **Variáveis Locais:** Inserir mock de `CREDENTIALS_SECRET` e `OPENAI_API_KEY` nos arquivos `.env` e `.env.example`.
 5. **Atualizações de Histórico e Documentação:** Concluir registros.
 
+## 2026-09-12 — 02:34 — Definição da Estratégia de Exposição Segura do Dashboard Remoto
+
+**Contexto:** O sistema roda localmente e não possui autenticação própria. O solicitante demandou a definição e documentação da estratégia de exposição segura do Dashboard Remoto para acesso externo ("VPN, túnel reverso ou proxy com autenticação").
+
+**Estratégia Escolhida (Opção A):**
+Túnel reverso com Proxy Autenticado via **Cloudflare Tunnels (Zero Trust)**.
+
+**Escopo aprovado (Execução Direta):**
+1. Atualização das documentações (`TOOLS.md` e `CHECKLIST.md`) formalizando a adoção do Cloudflare Tunnels (Zero Trust) como a solução padrão de exposição.
+2. Criação do documento `INFRA_EXPOSICAO.md` contendo o passo a passo de configuração.
+3. Inclusão do container `cloudflared` no `docker-compose.yml` para infraestrutura automatizada.
+4. Registro em `DEVLOG.md` detalhando as modificações e a conclusão da demanda.

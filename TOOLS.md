@@ -149,4 +149,4 @@ A aplicação roda na **máquina administrativa**, que concentra:
 
 **Portas:** todas as portas publicadas são parametrizadas por variável de ambiente, porque a máquina administrativa pode já ter serviços ocupando as portas padrão. O ambiente local em uso adota 27018 para o MongoDB, 6379 para o Redis, 3333 para o backend e 5180/5181 para os dashboards administrativo e remoto.
 
-**Exposição do Dashboard Remoto:** como não há autenticação real (ver `ESPECS_TECNICAS.md`, Seção 2.3), o acesso remoto deve ser feito por rede confiável — VPN, túnel reverso ou proxy com autenticação própria. **Decisão em aberto**, a fechar na fase de execução.
+**Exposição do Dashboard Remoto:** como não há autenticação real no código do sistema (ver `ESPECS_TECNICAS.md`, Seção 2.3), o acesso remoto é feito de forma segura via **Cloudflare Tunnels (Zero Trust)**. O túnel reverso expõe o serviço sem abrir portas locais (contornando CGNAT), enquanto a camada Zero Trust provê o bloqueio de acesso (autenticação via e-mail OTP/SSO) antes que a requisição chegue ao sistema. Para configuração, consulte o documento `INFRA_EXPOSICAO.md`.

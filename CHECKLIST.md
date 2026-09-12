@@ -209,9 +209,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [ ] **Definir se o descarte deve pedir confirmação** (*`DISCARDED` é terminal e bloqueia o produto permanentemente na deduplicação da ingestão; hoje um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade de 5 a 10 segundos por decisão*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
-- [ ] **Definir a estratégia de exposição segura do Dashboard Remoto** (*VPN, túnel reverso ou proxy com autenticação — o sistema não tem autenticação própria*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 ### Concluídas
+- [x] **Definir a estratégia de exposição segura do Dashboard Remoto** (*Decidido: Cloudflare Tunnels com Cloudflare Zero Trust para criar túnel reverso e prover proxy autenticado.*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 - [x] **Definir o método de criptografia das credenciais em banco** (*Decidido: AES-256-GCM implementado no arquivo database/credentials.ts, abstraindo a cifra/decifra de Models/DTOs.*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#10-pontos-técnicos-em-aberto))*
 - [x] **Escolher entre Playwright e Puppeteer** (*Decidido: Playwright oficializado como única dependência para scraping de SPAs/páginas dinâmicas, mantendo a regra de dependência única*)
