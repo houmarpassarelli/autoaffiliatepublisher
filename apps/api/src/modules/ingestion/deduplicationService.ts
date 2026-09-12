@@ -82,17 +82,48 @@ export async function filterNewOffers(
       { dedupeHash: { $in: dedupeHashes } },
       { sourceId, externalSku: { $in: externalSkus } }
     ]
-  }, { dedupeHash: 1, externalSku: 1 }).lean();
+  }, { dedupeHash: 1, externalSku: 1, _id: 1 }).lean();
 
   if (existingOffers.length === 0) {
     return rawOffers;
   }
 
-  // 3. Constrói conjuntos (Sets) para busca O(1) na hora do filtro
+  // 3. Registra o histórico de preço para as ofertas já existentes
+  const bulkOps = [];
+  const now = new Date();
+
+  for (const existing of existingOffers) {
+    // Encontra a oferta bruta correspondente para pegar o preço atual
+    const matchedRaw = rawOffers.find(
+      (ro) => ro.externalSku === existing.externalSku || generateDedupeHash(ro.originalUrl) === existing.dedupeHash
+    );
+
+    if (matchedRaw) {
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: existing._id },
+          update: {
+            $push: {
+              priceHistory: {
+                price: matchedRaw.priceCurrent,
+                capturedAt: now,
+              },
+            },
+          },
+        },
+      });
+    }
+  }
+
+  if (bulkOps.length > 0) {
+    await OfferModel.bulkWrite(bulkOps as any);
+  }
+
+  // 4. Constrói conjuntos (Sets) para busca O(1) na hora do filtro
   const existingHashes = new Set(existingOffers.map((offer) => offer.dedupeHash));
   const existingSkus = new Set(existingOffers.map((offer) => offer.externalSku));
 
-  // 4. Filtra o lote original, mantendo apenas o que é inédito
+  // 5. Filtra o lote original, mantendo apenas o que é inédito
   return rawOffers.filter((offer) => {
     const hash = generateDedupeHash(offer.originalUrl);
     

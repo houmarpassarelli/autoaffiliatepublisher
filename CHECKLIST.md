@@ -33,13 +33,12 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#81-deduplicação-na-ingestão))*
 - [x] **Reverificação de Preço e Disponibilidade Pré-Disparo** (*aborta o disparo se o produto esgotou ou o preço mudou — política de divergência a definir*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#92-verificação-pré-disparo))*
+- [x] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ### Pendentes
 - [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#41-módulo-a--ingestão-e-raspagem-worker))*
-
-- [ ] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
 
 ---
 

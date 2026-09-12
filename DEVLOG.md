@@ -782,3 +782,27 @@ O countdown roda sobre o **relógio do cliente**. Um aparelho com hora desregula
 ### 8. Efeito colateral de formatação
 
 Ao rodar o Prettier sobre `OfferCard.tsx`, uma chamada a `replaceUrlInCopy` escrita em sessão anterior foi quebrada em múltiplas linhas por exceder a largura configurada. É reformatação, não mudança de comportamento, e foi mantida para que o arquivo passe em `prettier --check`.
+
+## 2026-09-12 — 00:50 — Cálculo de Desconto Percentual e Registro de Histórico de Preços
+
+**Contexto:** O solicitante exigiu a execução da pendência que determina o cálculo automático do desconto percentual e a gravação da série temporal de preços (priceHistory) sempre que uma oferta for recapturada pelo fluxo de ingestão (Categoria 1 do `CHECKLIST.md`).
+
+### 1. `apps/api/src/modules/ingestion/offerUtils.ts`
+
+Criamos um utilitário exclusivo para as regras associadas à construção e cálculos isolados da oferta na coleta:
+- `calculateDiscountPct`: Calcula o desconto entre preço original e atual, cravado entre 0 e 100.
+- `enrichRawOffer`: Formata a `RawOffer` injetando o desconto e preparando o array `priceHistory` contendo a primeira captura. Essa função servirá como base construtora do futuro motor de ingestão de ofertas inéditas (Demanda 1.3).
+
+### 2. `apps/api/src/modules/ingestion/deduplicationService.ts`
+
+O serviço de deduplicação foi aprimorado.
+- Antes: identificava as ofertas com hash/sku repetidos através de um `find()` no MongoDB e as excluía do lote resultante (`rawOffers`), devolvendo apenas as inéditas. A oscilação de preço das repetidas se perdia.
+- Agora: As ofertas preexistentes detectadas passam a acionar uma rotina de `bulkWrite`. Nós relacionamos as repetidas à `RawOffer` atual do lote e acrescentamos a informação de `$push` no subdocumento `priceHistory` usando o `priceCurrent` mais recente e a data da nova captura (`new Date()`). 
+- Isso garante a gravação e evolução do histórico (série temporal) a cada recaptura sem burlar a lógica principal da deduplicação e independentemente do `status` (mesmo `DISCARDED`).
+
+### 3. Validações executadas
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run typecheck` nos pacotes `apps/api` e outros `workspaces` | Compilou corretamente, as interfaces `ObjectId` casaram conforme os Modelos do Mongoose. |
+| Alteração em `deduplicationService.ts` | O BulkWrite processa array `bulkOps` adequadamente e se nenhum for montado ignora a chamada a DB. |

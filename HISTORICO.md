@@ -293,3 +293,17 @@ Atualização da documentação (`CHECKLIST.md`, `TOOLS.md` e `FLUXO_OPERACIONAL
 5. **`apps/dashboard-remote/src/components/OfferCard.tsx` (edição):** countdown ao lado do horário absoluto na linha "Envio previsto", exclusivo do estado `SCHEDULED`.
 
 **Limitação declarada:** o countdown roda sobre o relógio do cliente; um aparelho com hora desregulada exibe contagem desregulada. O horário absoluto ao lado permanece correto, por vir do servidor. A correção do desvio exigiria sondar o horário do backend e fica registrada como ponto de extensão.
+## 2026-09-12 — 00:49 — Cálculo de Desconto Percentual e Registro de Histórico de Preços
+
+**Contexto:** O solicitante comandou explicitamente "EXECUTE O DESENVOLVIMENTO: Cálculo de Desconto Percentual e Registro de Histórico de Preços". A tarefa envolve o enriquecimento da série temporal `priceHistory` toda vez que um mesmo item for recapturado na ingestão, e o cálculo de desconto para inserção nas novas ofertas.
+
+**Escopo aprovado (Execução Direta):**
+
+1. **Utilitário de Ingestão (`apps/api/src/modules/ingestion/offerUtils.ts`):**
+   - Criação da função `calculateDiscountPct` limitando entre 0 e 100.
+   - Criação da função `enrichRawOffer` que, dada uma `RawOffer`, devolve o objeto formatado (incluindo o desconto e o primeiro histórico) para ser futuramente persistido pelo motor de inserção (que é outra demanda).
+
+2. **Deduplicação e Histórico (`apps/api/src/modules/ingestion/deduplicationService.ts`):**
+   - A função `filterNewOffers`, que antes apenas jogava foras os dados repetidos, agora fará uma correlação.
+   - A função acionará um `OfferModel.bulkWrite` efetuando o `$push` no campo `priceHistory` de cada oferta repetida no banco, usando o `priceCurrent` da captura atual e `capturedAt: new Date()`.
+   - O array `priceHistory` passa a refletir oscilações de preço independentemente do status atual da oferta na curadoria.
