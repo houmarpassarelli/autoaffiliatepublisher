@@ -363,3 +363,12 @@ Túnel reverso com Proxy Autenticado via **Cloudflare Tunnels (Zero Trust)**.
 2. Criação do documento `INFRA_EXPOSICAO.md` contendo o passo a passo de configuração.
 3. Inclusão do container `cloudflared` no `docker-compose.yml` para infraestrutura automatizada.
 4. Registro em `DEVLOG.md` detalhando as modificações e a conclusão da demanda.
+
+## 2026-09-13 — 05:22 — Confirmação no Descarte de Ofertas
+
+**Contexto:** O descarte de ofertas (status `DISCARDED`) é terminal e definitivo, impedindo recaptura. Para evitar cliques acidentais e perda irreversível, implementaremos uma etapa de confirmação antes de disparar o comando de descarte, conforme decisão do usuário.
+
+**Escopo aprovado:**
+1. Modificação do componente `OfferCard` (`apps/dashboard-remote/src/components/OfferCard.tsx`) para incluir um estado `showDiscardConfirm`.
+2. Interceptar o clique do botão "Descartar" original para ativar o estado de confirmação, exibindo um componente de confirmação.
+3. Adição de botões de confirmação segura ("Confirmar Descarte" e "Cancelar").

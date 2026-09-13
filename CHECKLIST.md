@@ -207,9 +207,9 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ### Pendentes
 - [ ] **Definir o valor operacional do intervalo do delay progressivo** (*referência inicial de 3 min; levantamento de mercado sugere 30 a 60 min para preservar a audiência*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
-- [ ] **Definir se o descarte deve pedir confirmação** (*`DISCARDED` é terminal e bloqueia o produto permanentemente na deduplicação da ingestão; hoje um clique errado não tem desfazer. A ausência de confirmação seguiu o requisito de agilidade de 5 a 10 segundos por decisão*)
-  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
 ### Concluídas
+- [x] **Definir se o descarte deve pedir confirmação** (*Decidido: Adicionada etapa de confirmação inline no card para priorizar a segurança contra descartes acidentais.*)
+  *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
 - [x] **Definir a estratégia de exposição segura do Dashboard Remoto** (*Decidido: Cloudflare Tunnels com Cloudflare Zero Trust para criar túnel reverso e prover proxy autenticado.*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#8-infraestrutura-local))*
 - [x] **Definir o método de criptografia das credenciais em banco** (*Decidido: AES-256-GCM implementado no arquivo database/credentials.ts, abstraindo a cifra/decifra de Models/DTOs.*)

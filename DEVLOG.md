@@ -866,4 +866,16 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 12/09/2026.
 
 ### 3. Conclusão da Categoria 8
 - A decisão em aberto no checklist sobre criptografia das credenciais em banco foi encerrada.
+ 
+## 2026-09-13 — Confirmação no Descarte de Ofertas
 
+Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
+
+### 1. Implementação da Confirmação Segura
+- O componente `OfferCard` (`apps/dashboard-remote/src/components/OfferCard.tsx`) foi atualizado para introduzir uma etapa de confirmação antes de concluir o descarte de uma oferta.
+- Criado o estado local `showDiscardConfirm`, inicialmente `false`.
+- A interface do rodapé (footer) reage a este estado, exibindo uma mensagem de alerta inline ("Tem certeza? O descarte é irreversível.") e substituindo os controles pelos botões "Confirmar Descarte" (aciona o `handleDiscard`) e "Cancelar" (reverte o estado).
+- A solução preserva a agilidade de curadoria, pois ocorre contextualmente dentro do próprio card, minimizando a fricção e cumprindo o requisito de prevenir descarte acidental que bloqueia as ofertas de futuras recuperações por deduplicação.
+
+### 2. Conclusão de Dependência (Categoria 8)
+- A verificação de "Definir se o descarte deve pedir confirmação" do `CHECKLIST.md` foi resolvida, optando-se ativamente por requerer confirmação visando maior segurança na curadoria.

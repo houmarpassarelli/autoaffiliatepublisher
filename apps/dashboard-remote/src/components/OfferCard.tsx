@@ -78,7 +78,7 @@ export function OfferCard({
   const [deselectedChannels, setDeselectedChannels] = useState<string[]>([]);
   const [pending, setPending] = useState<PendingAction>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   /**
    * A imagem vem da loja de origem e pode simplesmente não carregar — produto
    * removido, host fora do ar, hotlink bloqueado. Sem tratamento, o card exibe o
@@ -296,41 +296,69 @@ export function OfferCard({
 
       {isOpen ? (
         <div className="card-footer d-flex flex-wrap gap-2">
-          <Button
-            variant="primary"
-            onClick={handleDispatch}
-            loading={pending === 'dispatch'}
-            loadingLabel="Publicando…"
-            disabled={pending !== null || selectedChannels.length === 0}
-          >
-            Publicar
-          </Button>
+          {!showDiscardConfirm ? (
+            <>
+              <Button
+                variant="primary"
+                onClick={handleDispatch}
+                loading={pending === 'dispatch'}
+                loadingLabel="Publicando…"
+                disabled={pending !== null || selectedChannels.length === 0}
+              >
+                Publicar
+              </Button>
 
-          <Button
-            variant="secondary"
-            onClick={handleCopyAndDispatch}
-            loading={pending === 'copy'}
-            loadingLabel="Copiando…"
-            disabled={pending !== null || selectedChannels.length === 0 || !offer.aiCopy.messaging}
-          >
-            Copiar para Área de Transferência
-          </Button>
+              <Button
+                variant="secondary"
+                onClick={handleCopyAndDispatch}
+                loading={pending === 'copy'}
+                loadingLabel="Copiando…"
+                disabled={pending !== null || selectedChannels.length === 0 || !offer.aiCopy.messaging}
+              >
+                Copiar para Área de Transferência
+              </Button>
 
-          <Button
-            variant="danger"
-            onClick={handleDiscard}
-            loading={pending === 'discard'}
-            loadingLabel="Descartando…"
-            disabled={pending !== null}
-          >
-            Descartar
-          </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setShowDiscardConfirm(true);
+                }}
+                disabled={pending !== null}
+              >
+                Descartar
+              </Button>
 
-          {selectedChannels.length === 0 ? (
-            <span className="text-secondary align-self-center">
-              Escolha ao menos um canal para publicar.
-            </span>
-          ) : null}
+              {selectedChannels.length === 0 ? (
+                <span className="text-secondary align-self-center">
+                  Escolha ao menos um canal para publicar.
+                </span>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <span className="align-self-center fw-bold text-danger me-2">
+                Tem certeza? O descarte é irreversível.
+              </span>
+              <Button
+                variant="danger"
+                onClick={handleDiscard}
+                loading={pending === 'discard'}
+                loadingLabel="Descartando…"
+                disabled={pending !== null}
+              >
+                Confirmar Descarte
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowDiscardConfirm(false);
+                }}
+                disabled={pending !== null}
+              >
+                Cancelar
+              </Button>
+            </>
+          )}
         </div>
       ) : null}
     </div>
