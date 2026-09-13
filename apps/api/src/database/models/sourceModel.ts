@@ -17,6 +17,11 @@ export interface SourceAttributes {
   aiPromptTemplate: string; // Instrução específica de como a IA reescreve esta fonte
   active: boolean; // Fonte habilitada para varredura
   complianceVerified: boolean; // Confirmação de leitura das regras de compliance
+  preFilterMinDiscount?: number | null; // Desconto percentual mínimo
+  preFilterMinPrice?: number | null; // Preço mínimo
+  preFilterMaxPrice?: number | null; // Preço máximo
+  preFilterAllowedCategories?: string[] | null; // Categorias permitidas
+  preFilterBlockedCategories?: string[] | null; // Categorias bloqueadas
   lastRunAt: Date | null; // Última execução bem-sucedida da coleta
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +46,11 @@ const sourceSchema = new Schema<SourceAttributes>(
     aiPromptTemplate: { type: String, required: true },
     active: { type: Boolean, required: true, default: true },
     complianceVerified: { type: Boolean, required: true, default: false },
+    preFilterMinDiscount: { type: Number, default: null },
+    preFilterMinPrice: { type: Number, default: null },
+    preFilterMaxPrice: { type: Number, default: null },
+    preFilterAllowedCategories: { type: [String], default: null },
+    preFilterBlockedCategories: { type: [String], default: null },
     lastRunAt: { type: Date, default: null },
   },
   {

@@ -4,6 +4,17 @@ Registro dos planos aprovados pelo solicitante antes de cada sessão de execuç�
 
 ---
 
+## 2026-09-13 — 05:44 — Implementação do Filtro Determinístico Pré-IA
+
+**Contexto:** O projeto necessita de uma etapa de descarte de ofertas irrelevantes (desconto irrisório, preço fora da faixa, categoria indesejada) antes da chamada ao LLM, economizando tokens e otimizando o fluxo.
+
+**Escopo aprovado:**
+1. Atualização dos Schemas Zod em `packages/shared/src/schemas/sourceSchemas.ts` com os campos `preFilterMinDiscount`, `preFilterMinPrice`, `preFilterMaxPrice`, `preFilterAllowedCategories`, e `preFilterBlockedCategories`.
+2. Atualização do Mongoose Model em `apps/api/src/database/models/sourceModel.ts` com os novos campos.
+3. Atualização da interface `RawOffer` em `apps/api/src/modules/ingestion/contracts.ts` para incluir `category`.
+4. Criação da função `evaluateDeterministicFilter` em `apps/api/src/modules/ingestion/offerUtils.ts`.
+
+
 ## 2026-09-08 — 14:32 — Sprint 0: Estruturação do Monorepo
 
 **Contexto:** o projeto encontrava-se em fase exclusivamente documental, sem nenhuma linha de código. O solicitante determinou o início do desenvolvimento a partir das tasks de estruturação já definidas no `CHECKLIST.md`, com a exigência adicional de que o projeto fosse organizado como **monorepo**.

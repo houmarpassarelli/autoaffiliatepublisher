@@ -24,6 +24,11 @@ export const sourceDtoSchema = z.object({
   aiPromptTemplate: z.string(), // Instrução específica de como a IA reescreve esta fonte
   active: z.boolean(), // Fonte habilitada para varredura
   complianceVerified: z.boolean(), // Confirmação de leitura das regras de compliance
+  preFilterMinDiscount: z.number().nullable().optional(), // Desconto percentual mínimo
+  preFilterMinPrice: z.number().nullable().optional(), // Preço mínimo
+  preFilterMaxPrice: z.number().nullable().optional(), // Preço máximo
+  preFilterAllowedCategories: z.array(z.string()).nullable().optional(), // Categorias permitidas
+  preFilterBlockedCategories: z.array(z.string()).nullable().optional(), // Categorias bloqueadas
   lastRunAt: isoDateSchema.nullable(), // Última execução bem-sucedida da coleta
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
@@ -52,6 +57,11 @@ const sourceWritableFieldsSchema = z.object({
   complianceVerified: z.boolean().refine((val) => val === true, {
     message: 'É obrigatório confirmar a verificação das regras de compliance.',
   }), // Confirmação obrigatória
+  preFilterMinDiscount: z.number().nullable().optional(),
+  preFilterMinPrice: z.number().nullable().optional(),
+  preFilterMaxPrice: z.number().nullable().optional(),
+  preFilterAllowedCategories: z.array(z.string()).nullable().optional(),
+  preFilterBlockedCategories: z.array(z.string()).nullable().optional(),
 });
 
 /** Cadastro de uma fonte nova no Dashboard Administrativo. */

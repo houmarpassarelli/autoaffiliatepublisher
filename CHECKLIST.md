@@ -54,10 +54,10 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#4-estrutura-da-copy-gerada-pela-ia))*
 - [x] **Garantia da Fronteira Arquitetural da IA** (*a IA nunca recebe HTML bruto para extrair nem é instruída a navegar — validação de contrato de entrada*)
   *(Ref: [DOSSIE.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DOSSIE.md#interacao-1) — Interação 1, Ponto 2)*
+- [x] **Filtro Determinístico Pré-IA (Otimização de Custo)** (*descarte de ofertas irrelevantes antes de gastar tokens — desconto mínimo, faixa de preço, categoria; configurável por fonte*)
+  *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#41-otimização-de-custo-de-ia--ponto-de-atenção))*
 
 ### Pendentes
-- [ ] **Filtro Determinístico Pré-IA (Otimização de Custo)** (*descarte de ofertas irrelevantes antes de gastar tokens — desconto mínimo, faixa de preço, categoria; configurável por fonte*)
-  *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#41-otimização-de-custo-de-ia--ponto-de-atenção))*
 
 ---
 

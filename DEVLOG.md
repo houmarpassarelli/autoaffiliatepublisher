@@ -4,6 +4,18 @@ Registro detalhado do que foi criado ou alterado em cada sessão de execução, 
 
 ---
 
+## 2026-09-13 — Filtro Determinístico Pré-IA
+
+Sessão para implementação do filtro de otimização de custo (evitar gasto de LLM com ofertas irrelevantes). Referência do plano aprovado: `HISTORICO.md`, entrada de 2026-09-13 — 05:44.
+
+### O que foi alterado
+1. **Contratos Zod**: Adicionados os campos `preFilterMinDiscount`, `preFilterMinPrice`, `preFilterMaxPrice`, `preFilterAllowedCategories`, e `preFilterBlockedCategories` aos schemas em `packages/shared/src/schemas/sourceSchemas.ts`.
+2. **Model Mongoose**: Refletidas as mesmas alterações no `sourceSchema` e `SourceAttributes` em `apps/api/src/database/models/sourceModel.ts`.
+3. **Contrato de Ingestão**: Adicionado campo opcional `category` em `RawOffer` (`apps/api/src/modules/ingestion/contracts.ts`).
+4. **Lógica do Filtro**: Criada a função `evaluateDeterministicFilter` em `apps/api/src/modules/ingestion/offerUtils.ts` responsável por aplicar o filtro determinístico antes da oferta seguir para o fluxo de IA.
+
+A task correspondente no `CHECKLIST.md` (Categoria 2) foi movida para "Implementados no Código".
+
 ## 2026-09-08 — Sprint 0: Estruturação do Monorepo
 
 Primeira sessão de código do projeto. Referência do plano aprovado: `HISTORICO.md`, entrada de 2026-09-08.

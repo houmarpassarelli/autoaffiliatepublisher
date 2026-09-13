@@ -12,6 +12,7 @@ export interface RawOffer {
   imageUrl: string;
   priceOriginal: number;
   priceCurrent: number;
+  category?: string;
 }
 
 /**

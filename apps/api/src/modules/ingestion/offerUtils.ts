@@ -1,5 +1,6 @@
 // apps/api/src/modules/ingestion/offerUtils.ts
 import { Types } from 'mongoose';
+import type { SourceDocument } from '../../database/models/sourceModel.js';
 import type { RawOffer } from './contracts.js';
 
 /**
@@ -35,4 +36,53 @@ export function enrichRawOffer(rawOffer: RawOffer, sourceId: Types.ObjectId, ded
       },
     ],
   };
+}
+
+/**
+ * Filtro determinístico pré-IA: avalia se uma RawOffer cumpre os requisitos
+ * mínimos estabelecidos na Fonte para prosseguir no fluxo, evitando gasto de tokens.
+ */
+export function evaluateDeterministicFilter(rawOffer: RawOffer, source: SourceDocument): boolean {
+  // 1. Filtro de preço mínimo
+  if (source.preFilterMinPrice != null && rawOffer.priceCurrent < source.preFilterMinPrice) {
+    return false;
+  }
+
+  // 2. Filtro de preço máximo
+  if (source.preFilterMaxPrice != null && rawOffer.priceCurrent > source.preFilterMaxPrice) {
+    return false;
+  }
+
+  // 3. Filtro de desconto percentual mínimo
+  if (source.preFilterMinDiscount != null) {
+    const discount = calculateDiscountPct(rawOffer.priceOriginal, rawOffer.priceCurrent);
+    if (discount < source.preFilterMinDiscount) {
+      return false;
+    }
+  }
+
+  // 4. Filtro de categorias
+  if (rawOffer.category) {
+    // Se a fonte bloqueia esta categoria
+    if (source.preFilterBlockedCategories && source.preFilterBlockedCategories.length > 0) {
+      if (source.preFilterBlockedCategories.includes(rawOffer.category)) {
+        return false;
+      }
+    }
+
+    // Se a fonte tem uma lista estrita de categorias permitidas
+    if (source.preFilterAllowedCategories && source.preFilterAllowedCategories.length > 0) {
+      if (!source.preFilterAllowedCategories.includes(rawOffer.category)) {
+        return false;
+      }
+    }
+  } else {
+    // Se a oferta não tem categoria, mas a fonte EXIGE estar numa categoria permitida,
+    // devemos rejeitar (política conservadora para evitar ofertas cegas).
+    if (source.preFilterAllowedCategories && source.preFilterAllowedCategories.length > 0) {
+      return false;
+    }
+  }
+
+  return true;
 }
