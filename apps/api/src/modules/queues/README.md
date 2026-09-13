@@ -14,6 +14,6 @@ Fila central de disparos sobre Redis, com a política anti-spam do projeto.
 - Retentativas e concorrência controlada por canal.
 - Broadcast de `OFFER_PUBLISHED` na conclusão de cada job.
 
-## Decisão em aberto
+## Decisão consolidada
 
-Valor operacional do intervalo Δ (`DISPATCH_INTERVAL_MS`). Referência inicial de 3 minutos; o levantamento de mercado indica 30 a 60 minutos para preservar a audiência.
+Valor operacional do intervalo Δ (`DISPATCH_INTERVAL_MS`). Definido para **45 minutos** (2.700.000 ms), baseado no levantamento de mercado que indica 30 a 60 minutos para preservar a audiência e reduzir penalizações anti-spam (substituindo a referência inicial de 3 minutos).

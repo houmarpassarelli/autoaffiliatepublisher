@@ -46,7 +46,12 @@ function decryptValue(ciphertext: string): string {
   }
 
   try {
-    const [ivBase64, authTagBase64, encryptedBase64] = ciphertext.split(':');
+    const parts = ciphertext.split(':');
+    if (parts.length !== 3) {
+      return ciphertext;
+    }
+    const [ivBase64, authTagBase64, encryptedBase64] = parts as [string, string, string];
+
     const iv = Buffer.from(ivBase64, 'base64');
     const authTag = Buffer.from(authTagBase64, 'base64');
     

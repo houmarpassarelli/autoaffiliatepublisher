@@ -180,7 +180,7 @@ Implementada com **BullMQ sobre Redis**. Regra central:
 - **Fila vazia no momento do clique** → o item é disparado imediatamente e migra direto de `aberta` para `concluida`.
 - **Fila ocupada** → o item entra em `agendada`, recebendo um delay progressivo em relação ao último job enfileirado (item 1 imediato, item 2 em +Δ, item 3 em +2Δ, e assim por diante), e só migra para `concluida` quando o backend confirmar a publicação.
 
-O intervalo Δ é **parâmetro de balanceamento configurável**, não constante fixa. Ele existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS`, validada na inicialização do backend — nenhum valor de delay é escrito diretamente na lógica. O valor de referência inicial é de 3 minutos; o levantamento de mercado registrado no `DOSSIE.md` indica que intervalos de 30 a 60 minutos preservam melhor a audiência e reduzem risco de filtro anti-spam. A definição do valor operacional permanece decisão em aberto.
+O intervalo Δ é **parâmetro de balanceamento configurável**, não constante fixa. Ele existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS`, validada na inicialização do backend — nenhum valor de delay é escrito diretamente na lógica. O valor operacional adotado é de **45 minutos** (`2.700.000` ms), decisão baseada no levantamento de mercado (`DOSSIE.md`) que indica que intervalos de 30 a 60 minutos preservam melhor a audiência e reduzem risco de filtro anti-spam (substituindo a referência inicial de 3 minutos).
 
 ---
 

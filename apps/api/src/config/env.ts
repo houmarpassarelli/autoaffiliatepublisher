@@ -31,9 +31,9 @@ const envSchema = z.object({
     ),
 
   // Intervalo Δ do delay progressivo anti-spam, em milissegundos.
-  // Parâmetro de balanceamento, não constante fixa: o valor operacional definitivo
-  // é decisão em aberto (CHECKLIST.md, Categoria 8).
-  DISPATCH_INTERVAL_MS: z.coerce.number().int().nonnegative().default(180_000),
+  // Parâmetro de balanceamento (45 minutos como padrão operacional adotado), não constante fixa,
+  // para preservar a audiência e minimizar risco de filtros de spam (CHECKLIST.md, Categoria 8 - Fechada).
+  DISPATCH_INTERVAL_MS: z.coerce.number().int().nonnegative().default(2_700_000),
 
   // Janela de tolerância do heartbeat do WebSocket, em milissegundos.
   // Conexões silenciosas por mais tempo que isto são encerradas e têm a presença

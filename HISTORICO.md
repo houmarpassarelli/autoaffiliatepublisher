@@ -372,3 +372,15 @@ Túnel reverso com Proxy Autenticado via **Cloudflare Tunnels (Zero Trust)**.
 1. Modificação do componente `OfferCard` (`apps/dashboard-remote/src/components/OfferCard.tsx`) para incluir um estado `showDiscardConfirm`.
 2. Interceptar o clique do botão "Descartar" original para ativar o estado de confirmação, exibindo um componente de confirmação.
 3. Adição de botões de confirmação segura ("Confirmar Descarte" e "Cancelar").
+4. Atualização dos documentos `FLUXO_OPERACIONAL.md` e `CHECKLIST.md` formalizando a decisão.
+
+## 2026-09-13 — 05:32 — Definição do valor operacional do intervalo do delay progressivo (DISPATCH_INTERVAL_MS)
+
+**Contexto:** O projeto necessitava definir o valor operacional do intervalo de disparo para evitar penalizações de spam e manter o engajamento da audiência. O intervalo sugerido era entre 30 e 60 minutos, frente à referência inicial insuficiente de 3 minutos.
+
+**Escopo aprovado (Execução Direta):**
+1. Definição do valor operacional de **45 minutos** (`2.700.000` ms) como `DISPATCH_INTERVAL_MS`.
+2. Alteração do valor padrão na validação `apps/api/src/config/env.ts` de `180_000` para `2_700_000`.
+3. Atualização dos arquivos `.env` e `.env.example` com o novo valor e remoção do comentário de "decisão em aberto".
+4. Atualização da documentação (`ESPECS_TECNICAS.md`, `ARQUITETURA.md`, `DOSSIE.md`, e demais localizações) consolidando a decisão em substituição à referência inicial de 3 minutos.
+5. Fechamento da task no `CHECKLIST.md` e inclusão da sessão no `DEVLOG.md`.

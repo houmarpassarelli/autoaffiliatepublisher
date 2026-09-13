@@ -879,3 +879,17 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
 
 ### 2. Conclusão de Dependência (Categoria 8)
 - A verificação de "Definir se o descarte deve pedir confirmação" do `CHECKLIST.md` foi resolvida, optando-se ativamente por requerer confirmação visando maior segurança na curadoria.
+
+## 2026-09-13 — Definição do valor operacional do intervalo do delay progressivo (DISPATCH_INTERVAL_MS)
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
+
+### 1. Ajustes de Configuração
+- O valor padrão em `apps/api/src/config/env.ts` para `DISPATCH_INTERVAL_MS` foi atualizado de `180_000` (3 minutos) para `2_700_000` (45 minutos), atendendo à recomendação de mercado para espaçamento anti-spam e preservação da audiência.
+- As variáveis baseadas nos arquivos `.env` e `.env.example` foram atualizadas adequadamente.
+
+### 2. Atualização de Documentação
+- Ajustados os arquivos `ESPECS_TECNICAS.md`, `ARQUITETURA.md`, `DOSSIE.md` e o README do módulo `queues` para oficializar 45 minutos como a regra padrão do intervalo, extinguindo o caráter provisório ou "em aberto".
+
+### 3. Conclusão de Dependência (Categoria 8)
+- A verificação "Definir o valor operacional do intervalo do delay progressivo" do `CHECKLIST.md` foi marcada como concluída e movida de Pendentes para Concluídas, fechando a última pendência da Categoria 8.

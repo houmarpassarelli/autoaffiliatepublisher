@@ -205,9 +205,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 ## 8. 🛡️ Verificações, Validações de Segurança e Decisões em Aberto
 
 ### Pendentes
-- [ ] **Definir o valor operacional do intervalo do delay progressivo** (*referência inicial de 3 min; levantamento de mercado sugere 30 a 60 min para preservar a audiência*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
+*(nenhum item)*
+
 ### Concluídas
+- [x] **Definir o valor operacional do intervalo do delay progressivo** (*Decidido: 45 minutos (2.700.000 ms), referenciando os 30 a 60 minutos sugeridos pelo levantamento de mercado.*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#7-fórmula-do-delay-progressivo-anti-spam))*
 - [x] **Definir se o descarte deve pedir confirmação** (*Decidido: Adicionada etapa de confirmação inline no card para priorizar a segurança contra descartes acidentais.*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#1-o-modelo-human-in-the-loop))*
 - [x] **Definir a estratégia de exposição segura do Dashboard Remoto** (*Decidido: Cloudflare Tunnels com Cloudflare Zero Trust para criar túnel reverso e prover proxy autenticado.*)

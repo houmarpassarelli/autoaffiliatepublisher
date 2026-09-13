@@ -315,7 +315,7 @@ function calculateDispatchTime(lastScheduledAt: Date | null, intervalMs: number)
 
 | Parâmetro | Valor de referência | Natureza |
 | :--- | :--- | :--- |
-| `intervalMs` | 3 minutos (180.000 ms) | **Configurável.** O levantamento de mercado registrado no `DOSSIE.md` indica que 30 a 60 minutos preservam melhor a audiência. Valor operacional a definir na execução. |
+| `intervalMs` | 45 minutos (2.700.000 ms) | **Configurável.** Valor operacional adotado com base no levantamento de mercado (`DOSSIE.md`) que recomendava 30 a 60 minutos para preservar a audiência e mitigar riscos anti-spam. |
 
 Enfileiramento no BullMQ segue o padrão baseado em delay:
 
@@ -372,7 +372,7 @@ Antes de publicar em canal público, o worker de disparo revalida preço e dispo
 
 Registrados para resolução na fase de execução:
 
-1. **Valor operacional do `intervalMs`** do delay progressivo (Seção 7). O parâmetro já existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS`; o que permanece em aberto é o valor a adotar em operação.
+1. **Valor operacional do `intervalMs`** do delay progressivo (Seção 7). O parâmetro existe no código como a variável de ambiente `DISPATCH_INTERVAL_MS` e o valor foi definido para **45 minutos** (Decisão encerrada).
 2. **Política de divergência de preço** na reverificação pré-disparo (Seção 8.2).
 3. **Método de criptografia** das credenciais em `sources.credentials` e `channels.credentials`.
 4. **Estratégia de WhatsApp**: qual biblioteca/instância não-oficial, se houver, ou modo exclusivamente assistido.
