@@ -5,6 +5,7 @@ import { OfferModel, SourceModel } from '../../database/models/index.js';
 import { ConflictError, NotFoundError } from '../../server/errors.js';
 import { withUniqueConstraint } from '../../server/mongoErrors.js';
 import { toSourceDto, type MappableSource } from './sourceMapper.js';
+import { removeSourceCron, scheduleSourceJob } from '../ingestion/schedulerService.js';
 
 /**
  * Cadastro das fontes de coleta.
@@ -18,7 +19,7 @@ import { toSourceDto, type MappableSource } from './sourceMapper.js';
 const SOURCE_FIELD_LABELS = { name: 'este nome' } as const;
 
 /** Localiza a fonte ou recusa a operação — usado por toda rota que endereça uma fonte. */
-async function requireSource(sourceId: string): Promise<InstanceType<typeof SourceModel>> {
+export async function requireSource(sourceId: string): Promise<InstanceType<typeof SourceModel>> {
   const source = await SourceModel.findById(sourceId);
 
   if (!source) {
@@ -56,6 +57,8 @@ export async function createSource(input: SourceCreateInput): Promise<SourceDto>
   });
 
   await withUniqueConstraint(() => source.save(), SOURCE_FIELD_LABELS);
+  
+  scheduleSourceJob(source);
 
   return toSourceDto(source);
 }
@@ -81,6 +84,8 @@ export async function updateSource(sourceId: string, input: SourceUpdateInput): 
   source.credentials = applyCredentialsPatch(source.credentials, input.credentials);
 
   await withUniqueConstraint(() => source.save(), SOURCE_FIELD_LABELS);
+  
+  scheduleSourceJob(source);
 
   return toSourceDto(source);
 }
@@ -106,4 +111,6 @@ export async function deleteSource(sourceId: string): Promise<void> {
   }
 
   await SourceModel.deleteOne({ _id: sourceId });
+  
+  removeSourceCron(sourceId);
 }

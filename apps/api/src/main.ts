@@ -7,6 +7,7 @@ import { ensureIndexes } from './database/models/index.js';
 import { resetPresence, shutdownWebsocketModule } from './modules/websocket/index.js';
 import { shutdownQueues } from './modules/queues/index.js';
 import { buildApp } from './server/app.js';
+import { startIngestionScheduler, stopIngestionScheduler } from './modules/ingestion/schedulerService.js';
 
 /**
  * Ponto de entrada da máquina administrativa.
@@ -33,6 +34,9 @@ async function bootstrap(): Promise<void> {
     );
   }
 
+  // Inicializa o agendador de ingestão das fontes ativas
+  await startIngestionScheduler();
+
   registerShutdownHandlers(app);
 
   await app.listen({ host: env.HOST, port: env.PORT });
@@ -52,6 +56,7 @@ function registerShutdownHandlers(app: FastifyInstance): void {
         app.log.info(`Sinal ${signal} recebido. Encerrando a aplicação.`);
 
         try {
+          stopIngestionScheduler();
           shutdownWebsocketModule();
           await shutdownQueues();
           await app.close();

@@ -9,7 +9,8 @@ import {
   sourceListResponseSchema,
   sourceUpdateSchema,
 } from '@aap/shared';
-import { createSource, deleteSource, listSources, updateSource } from './sourceService.js';
+import { createSource, deleteSource, listSources, updateSource, requireSource } from './sourceService.js';
+import { runIngestionForSource } from '../ingestion/ingestionRunner.js';
 
 /**
  * CRUD de fontes de coleta (`ESPECS_TECNICAS.md`, Seção 9).
@@ -79,6 +80,33 @@ export const sourceRoutes: FastifyPluginAsyncZod = async (app) => {
       await deleteSource(request.params.id);
 
       return reply.status(204).send(null);
+    },
+  );
+
+  /**
+   * Disparo manual de varredura (Demanda 1.3).
+   * Roda o pipeline completo de forma assíncrona, retornando 202 Accepted.
+   */
+  app.post(
+    '/api/sources/:id/run',
+    {
+      schema: {
+        params: resourceIdParamsSchema,
+        response: {
+          202: z.object({ message: z.string() }),
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const source = await requireSource(request.params.id);
+
+      // Rodamos de forma assíncrona para não prender a resposta
+      runIngestionForSource(source).catch((error) => {
+        app.log.error({ err: error, sourceId: source._id }, 'Falha na varredura manual da fonte');
+      });
+
+      return reply.status(202).send({ message: 'Varredura iniciada' });
     },
   );
 };

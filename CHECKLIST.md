@@ -35,10 +35,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#92-verificação-pré-disparo))*
 - [x] **Cálculo de Desconto Percentual e Registro de Histórico de Preços** (*`priceHistory` alimentado a cada captura do mesmo item*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#22-coleção-offers--ofertas-coletadas-e-processadas))*
+- [x] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
+  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#41-módulo-a--ingestão-e-raspagem-worker))*
 
 ### Pendentes
-- [ ] **Engine de Ingestão com Scheduler por Fonte** (*`node-cron` disparando a varredura conforme a `cronExpression` cadastrada em cada fonte*) — **Demanda 1.3, Sprint 1**
-  *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#41-módulo-a--ingestão-e-raspagem-worker))*
+*(nenhum item)*
 
 ---
 
@@ -115,10 +116,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#8-rastreamento-de-ações-e-auditoria) · Ver [DEVLOG.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/DEVLOG.md), sessão de 09/09/2026 — Painel de Auditoria)*
 - [x] **Exportação CSV do Recorte Filtrado** (*`GET /api/logs/export`, respeitando os filtros e ignorando a paginação. Separador `;`, marca de ordem de bytes e vírgula decimal, para abrir correto no Excel em português; injeção de fórmula neutralizada, já que título e loja vêm de dados coletados de terceiros*)
   *(Ref: [MONETIZACAO.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/MONETIZACAO.md#32-o-cruzamento-de-dados) — o rateio é um cruzamento entre esta base e a planilha de vendas da plataforma)*
+- [x] **Disparo Manual de Varredura por Fonte** (*rota `POST /api/sources/:id/run` para testar uma fonte sem esperar o cron*)
+  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#9-rotas-http-principais-fastify--zod))*
 
 ### Pendentes
-- [ ] **Disparo Manual de Varredura por Fonte** (*rota `POST /api/sources/:id/run` para testar uma fonte sem esperar o cron*)
-  *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#9-rotas-http-principais-fastify--zod))*
+*(nenhum item)*
 
 ---
 

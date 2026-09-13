@@ -905,3 +905,19 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
 
 ### 3. Conclusão de Dependência (Categoria 8)
 - A verificação "Definir o valor operacional do intervalo do delay progressivo" do `CHECKLIST.md` foi marcada como concluída e movida de Pendentes para Concluídas, fechando a última pendência da Categoria 8.
+
+## 2026-09-13 — Engine de Ingestão com Scheduler por Fonte (Demanda 1.3)
+
+Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
+
+### 1. Scheduler e Orquestração
+- Implementado o gerenciamento de agendamentos com `node-cron` no novo `schedulerService.ts`, ancorado na inicialização e desligamento do `main.ts`.
+- O cron job é associado ao ID da fonte e recriado/removido na hora no CRUD administrativo (via `createSource`, `updateSource`, `deleteSource`), refletindo dinamicamente as alterações de intervalo ou o estado inativo (`active`).
+- Criado o fluxo de execução completo no `ingestionRunner.ts`. Ele realiza o consumo do `IngestorFactory`, a deduplicação prévia (`filterNewOffers`), o teste determinístico rigoroso (salvando reprovadas diretamente como `DISCARDED`), o enriquecimento (com `offerUtils.enrichRawOffer`), e submete à IA (`aiService`). 
+- As ofertas que passam no pipeline são convertidas via `convertCanonicalToAffiliateUrl`, recebem os textos gerados pela IA e persistem no banco (`OfferModel.insertMany`) com o estado inicial de `OPEN`.
+
+### 2. Rotas e Interface
+- Incluída a rota de disparo manual `POST /api/sources/:id/run` no pacote `@aap/api`, permitindo forçar a ingestão assíncrona sob demanda independentemente do cron agendado.
+
+### 3. Checklist e Dependências
+- Marcados como Concluídos no `CHECKLIST.md`: "Engine de Ingestão com Scheduler por Fonte" e "Disparo Manual de Varredura por Fonte". A biblioteca `node-cron` e suas definições de tipo foram instaladas localmente no `@aap/api`.

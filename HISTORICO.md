@@ -395,3 +395,14 @@ Túnel reverso com Proxy Autenticado via **Cloudflare Tunnels (Zero Trust)**.
 3. Atualização dos arquivos `.env` e `.env.example` com o novo valor e remoção do comentário de "decisão em aberto".
 4. Atualização da documentação (`ESPECS_TECNICAS.md`, `ARQUITETURA.md`, `DOSSIE.md`, e demais localizações) consolidando a decisão em substituição à referência inicial de 3 minutos.
 5. Fechamento da task no `CHECKLIST.md` e inclusão da sessão no `DEVLOG.md`.
+    
+## 2026-09-13 — 05:52 — Engine de Ingestão com Scheduler por Fonte
+
+**Contexto:** Implementação do agendador automático que fará a ingestão de ofertas de acordo com o intervalo definido (`cronExpression`) de cada fonte ativa, além da disponibilização de um endpoint manual para disparo de varredura. Esta é a Demanda 1.3 da Sprint 1.
+
+**Escopo aprovado:**
+1. Adicionar `node-cron` e `@types/node-cron` no workspace `apps/api`.
+2. Criar `schedulerService.ts` com gerenciamento em memória dos jobs e reatividade para adição/remoção.
+3. Criar `ingestionRunner.ts` orquestrando o pipeline: coleta, deduplicação (que já grava `priceHistory`), filtro determinístico (marcando como `DISCARDED` se falhar), enriquecimento com IA (`aiService`) para gerar a copy final e persistência como `OPEN`. Emissão do websocket `OFFER_CREATED`.
+4. Acoplar a inicialização e o encerramento do agendador ao `main.ts`.
+5. Modificar rotas do CRUD de fontes para reagir a alterações e expor a rota manual `POST /api/sources/:id/run`.
