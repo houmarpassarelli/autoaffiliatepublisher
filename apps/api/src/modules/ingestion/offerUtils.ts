@@ -1,5 +1,5 @@
 // apps/api/src/modules/ingestion/offerUtils.ts
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import type { SourceDocument } from '../../database/models/sourceModel.js';
 import type { RawOffer } from './contracts.js';
 

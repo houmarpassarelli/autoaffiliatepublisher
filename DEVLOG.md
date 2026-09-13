@@ -921,3 +921,14 @@ Referência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.
 
 ### 3. Checklist e Dependências
 - Marcados como Concluídos no `CHECKLIST.md`: "Engine de Ingestão com Scheduler por Fonte" e "Disparo Manual de Varredura por Fonte". A biblioteca `node-cron` e suas definições de tipo foram instaladas localmente no `@aap/api`.
+\n## 2026-09-13 — Driver WhatsApp Canais (biblioteca não-oficial)\n\nReferência do plano aprovado: `HISTORICO.md`, entrada de 13/09/2026.\n\n### 1. Implementação do Driver\n- Adicionadas as dependências `@whiskeysockets/baileys` e `qrcode-terminal` ao pacote `@aap/api`.\n- Criado o cliente Singleton (`whatsappClient.ts`) que garante a inicialização do driver e a persistência da sessão na pasta local `storage/whatsapp-auth`, exibindo o QR Code de autenticação no console da máquina administrativa.\n- Criado o arquivo `whatsappDriver.ts` que decripta as credenciais via `getDecryptedCredentials` para obter o ID do grupo (JID), processa o formato da *AI copy* (usando preferencialmente a chave `messaging`), anexa a imagem do produto, e faz o disparo do conteúdo via Websocket nativo usando o *Baileys*.\n\n### 2. Integração no Dispatcher\n- O `dispatchWorker.ts` foi atualizado para despachar as mensagens utilizando o `whatsappDriver` se o canal selecionado possuir a chave `whatsapp`.\n- A chamada `initWhatsAppClient()` foi injetada na inicialização do backend (`main.ts`).\n- O worker agora salva o log de resultado no `DispatchLogModel` em caso de sucesso (`DELIVERED`) ou falha.\n\n### 3. Checklist\n- Marcado como Concluído no `CHECKLIST.md`: "Driver WhatsApp Canais (biblioteca não-oficial)".
+## 2026-09-13 — 12:37 — Driver Telegram (Bot API — automação total, disparo imediato)
+
+**Contexto:** O solicitante exigiu a execução direta do driver do Telegram, conforme estipulado na Categoria 6 do `CHECKLIST.md`.
+
+**Escopo aprovado (Execução Direta):**
+1. **Driver do Telegram:** Criado `apps/api/src/modules/channels/drivers/telegram/telegramDriver.ts`. O driver utiliza a Bot API do Telegram via `axios`.
+2. **Resolução de Autenticação:** A função `getDecryptedCredentials` é usada para extrair o `botToken` e o `chatId` configurados para o canal.
+3. **Seleção de Formato:** Utiliza o formato definido por `channel.copyFormatKey` (ex. `messaging`). Se o produto possuir `imageUrl`, envia via `sendPhoto`; senão, utiliza `sendMessage`.
+4. **Integração no Dispatcher:** Atualizado `apps/api/src/modules/queues/dispatchWorker.ts` para invocar o `dispatchToTelegram` caso a chave do canal seja `telegram`.
+5. **Atualização da documentação:** `CHECKLIST.md` atualizado movendo a task para a seção de itens implementados.

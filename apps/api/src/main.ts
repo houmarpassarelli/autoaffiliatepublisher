@@ -8,6 +8,7 @@ import { resetPresence, shutdownWebsocketModule } from './modules/websocket/inde
 import { shutdownQueues } from './modules/queues/index.js';
 import { buildApp } from './server/app.js';
 import { startIngestionScheduler, stopIngestionScheduler } from './modules/ingestion/schedulerService.js';
+import { initWhatsAppClient } from './modules/channels/drivers/whatsapp/whatsappClient.js';
 
 /**
  * Ponto de entrada da máquina administrativa.
@@ -36,6 +37,9 @@ async function bootstrap(): Promise<void> {
 
   // Inicializa o agendador de ingestão das fontes ativas
   await startIngestionScheduler();
+
+  // Inicializa o cliente do WhatsApp em background
+  initWhatsAppClient().catch(err => app.log.error(err, 'Erro ao inicializar driver do WhatsApp'));
 
   registerShutdownHandlers(app);
 

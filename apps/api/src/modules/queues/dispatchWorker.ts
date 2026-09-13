@@ -91,11 +91,45 @@ export const dispatchWorker = new Worker<DispatchJobData>(
       }
     }
 
-    // TODO (Sprint 3): Aqui seriam invocados os drivers de canais.
-    // Para esta etapa (Demanda 2.1), apenas simulamos o sucesso (delivery vazio ou mock).
-    const deliveryStatus = {};
+    // 2. Disparo para os canais selecionados
+    const deliveryStatus: Record<string, string> = {};
+    const { ChannelModel } = await import('../../database/models/index.js');
+    const { dispatchToWhatsApp } = await import('../channels/drivers/whatsapp/whatsappDriver.js');
+    const { dispatchToTelegram } = await import('../channels/drivers/telegram/telegramDriver.js');
 
-    // Atualizamos o DispatchLog com o status da entrega, se tivéssemos.
+    const selectedChannels = offer.selectedChannels || [];
+
+    for (const channelKey of selectedChannels) {
+      const channel = await ChannelModel.findOne({ key: channelKey });
+      
+      if (!channel) {
+        deliveryStatus[channelKey] = 'CHANNEL_NOT_FOUND';
+        continue;
+      }
+      
+      if (!channel.active) {
+        deliveryStatus[channelKey] = 'CHANNEL_INACTIVE';
+        continue;
+      }
+
+      try {
+        if (channel.key === 'whatsapp') {
+          const res = await dispatchToWhatsApp(channel, offer as any);
+          deliveryStatus[channelKey] = res.success ? 'DELIVERED' : `ERROR: ${res.error}`;
+        } else if (channel.key === 'telegram') {
+          const res = await dispatchToTelegram(channel, offer as any);
+          deliveryStatus[channelKey] = res.success ? 'DELIVERED' : `ERROR: ${res.error}`;
+        } else {
+          // Outros drivers ainda não implementados
+          deliveryStatus[channelKey] = 'DRIVER_NOT_IMPLEMENTED';
+        }
+      } catch (err: any) {
+        console.error(`[Dispatch] Falha ao despachar oferta ${offerId} para canal ${channelKey}:`, err);
+        deliveryStatus[channelKey] = `ERROR: ${err.message}`;
+      }
+    }
+
+    // Atualizamos o DispatchLog com o status da entrega.
     await DispatchLogModel.updateOne(
       { offerId },
       { $set: { deliveryStatus } }

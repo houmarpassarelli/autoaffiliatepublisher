@@ -406,3 +406,13 @@ Túnel reverso com Proxy Autenticado via **Cloudflare Tunnels (Zero Trust)**.
 3. Criar `ingestionRunner.ts` orquestrando o pipeline: coleta, deduplicação (que já grava `priceHistory`), filtro determinístico (marcando como `DISCARDED` se falhar), enriquecimento com IA (`aiService`) para gerar a copy final e persistência como `OPEN`. Emissão do websocket `OFFER_CREATED`.
 4. Acoplar a inicialização e o encerramento do agendador ao `main.ts`.
 5. Modificar rotas do CRUD de fontes para reagir a alterações e expor a rota manual `POST /api/sources/:id/run`.
+\n## 2026-09-13 — 06:36 — Driver WhatsApp Canais\n\n**Contexto:** O projeto usará uma biblioteca não-oficial para postar em canais/grupos no WhatsApp, conforme definido em `TOOLS.md`. A escolha mais leve e performática para um backend Node.js é o `@whiskeysockets/baileys`, que interage nativamente via WebSocket.\n\n**Escopo aprovado:**\n1. Instalação das dependências `@whiskeysockets/baileys` e `qrcode-terminal` no `@aap/api`.\n2. Criação do serviço do cliente (`whatsappClient.ts`) para iniciar a sessão persistente com geração de QR code via terminal.\n3. Criação do driver (`whatsappDriver.ts`) que efetuará o envio (copy + imagem) para o grupo/canal de destino.\n4. Integração no `dispatchWorker.ts` via `DriverFactory`, orquestrando o roteamento da oferta para o driver.\n5. O status de envio é atualizado em `DispatchLogModel`.
+## 2026-09-13 — 12:36 — Driver Telegram (Bot API — automação total, disparo imediato)
+
+**Contexto:** O solicitante comandou explicitamente "EXECUTE O DESENVOLVIMENTO: **Driver Telegram** (*Bot API — automação total, disparo imediato*)".
+
+**Escopo aprovado (Execução Direta):**
+1. **Driver do Telegram:** Criação de `telegramDriver.ts` usando a biblioteca `axios` para comunicação com a Telegram Bot API. O payload é ajustado para envio de foto caso a oferta possua imagem, ou apenas mensagem de texto (incluindo o fallback do affiliateUrl caso ausente).
+2. **Integração no Dispatcher:** Atualização de `dispatchWorker.ts` para capturar a chave de canal 'telegram' e disparar o driver específico.
+3. **Decriptação:** Utilização de `getDecryptedCredentials` em conformidade com as regras de segurança estabelecidas (botToken, chatId).
+4. **Atualização da Documentação:** `DEVLOG.md` e `CHECKLIST.md` atualizados.

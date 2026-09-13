@@ -169,9 +169,11 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
 
 - [x] **Broadcast `OFFER_PUBLISHED` na Conclusão do Job** (*move o card de Agendadas para Concluídas em todas as telas*)
   *(Ref: [ESPECS_TECNICAS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ESPECS_TECNICAS.md#31-eventos-emitidos-pelo-servidor-broadcast))*
-### Pendentes
-- [ ] **Driver Telegram** (*Bot API — automação total, disparo imediato*)
+- [x] **Driver WhatsApp Canais (biblioteca não-oficial)** (*automação total via @whiskeysockets/baileys, com risco de banimento aceito*)
+  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
+- [x] **Driver Telegram** (*Bot API — automação total, disparo imediato*)
   *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#4-apis-de-publicação-por-canal))*
+### Pendentes
 - [ ] **Driver Site Próprio** (*publicação via API interna do CMS ou escrita direta em banco*)
   *(Ref: [ARQUITETURA.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/ARQUITETURA.md#45-módulo-e--publicação-multicanal-drivers))*
 - [ ] **Driver Instagram Feed/Carrossel** (*Meta Graph API com conta empresarial — sem link clicável em legenda*)
@@ -180,8 +182,6 @@ Este documento compila o status completo de desenvolvimento do projeto **Auto Af
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
 - [ ] **Driver TikTok (modo assistido)** (*preparação de criativo + legenda*)
   *(Ref: [FLUXO_OPERACIONAL.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/FLUXO_OPERACIONAL.md#95-restrições-por-canal))*
-- [ ] **Driver WhatsApp Canais (biblioteca não-oficial)** (*automação total via biblioteca tipo Baileys/whatsapp-web.js, com risco de banimento aceito*)
-  *(Ref: [TOOLS.md](file:///home/houmar/Workspace/AutoAffiliatePublisher/TOOLS.md#41-whatsapp--nota-de-risco-explícita))*
 
 ---
 

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import { OfferModel } from '../../database/models/offerModel.js';
 import type { RawOffer } from './contracts.js';
 
